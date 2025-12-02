@@ -54,6 +54,9 @@
 
 
           gh delta nushell zoxide starship
+
+          #testing
+          prismlauncher
           ];
 
   home.shellAliases = {
@@ -75,6 +78,8 @@
   programs.bash.enable = true;
   programs.git = {
       enable = true;
-      extraConfig = { core.pager = "delta"; };
+      settings = { core.pager = "delta"; };
   };
 }
+
+# vim: ts=2 sts=2 sw=2 et
