@@ -7,25 +7,25 @@
 
   # Dotfiles
   home.file.".config/hypr" = {
-      source = ./config/hypr;
+      source = ../../config/hypr;
       force = true;
   };
   home.file.".config/waybar" = {
-      source = ./config/waybar;
+      source = ../../config/waybar;
       force = true;
   };
   home.file.".config/git" = {
-      source = ./config/git;
+      source = ../../config/git;
       force = true;
   };
   home.file.".config/wezterm" = {
-      source = ./config/wezterm;
+      source = ../../config/wezterm;
       force = true;
   };
 
   home.packages = with pkgs; [
       # Custom cli
-      (confdev.packages.${system}.default)
+      (confdev.packages.${pkgs.system}.default)
 
       tree
           tree-sitter
@@ -55,18 +55,26 @@
 
           gh delta nushell zoxide starship
 
+          bibata-cursors
+
           #testing
-          prismlauncher
+          prismlauncher # Im not sold on this
           ];
 
   home.shellAliases = {
-      nbc = "sudo nixos-rebuild switch --flake ~/nixos-dotfiles#main";
-      hbc = "home-manager switch --flake ~/nixos-dotfiles#main";
+    nbc = "sudo nixos-rebuild switch --flake ~/nixos-dotfiles#main-desktop";
+    hbc = "home-manager switch --flake ~/nixos-dotfiles#main-desktop";
   };
 
-  home.sessionVariables = {
-      GPG_TTY = "$TTY";
-  };
+home.sessionVariables = {
+  GPG_TTY = "$TTY";
+  XCURSOR_THEME = "Bibata-Modern-Ice";
+  XCURSOR_SIZE = "24";
+
+  # Optional, future-proof for hyprcursor animated themes
+  HYPRCURSOR_THEME = "Bibata-Modern-Ice";
+  HYPRCURSOR_SIZE = "24";
+};
 
   programs.neovim = {
       enable = true;
@@ -80,6 +88,9 @@
       enable = true;
       settings = { core.pager = "delta"; };
   };
+
+  programs.starship.enable = true;
+  programs.zoxide.enable = true;
 }
 
 # vim: ts=2 sts=2 sw=2 et

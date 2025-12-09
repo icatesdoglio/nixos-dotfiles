@@ -17,34 +17,46 @@
     };
 
     outputs = { self, nixpkgs, neovim-nightly-overlay, home-manager, r423, confdev, ... }:
+    let
+        mkSystem = {system, hostPath, extraHMArgs ? {}}:
         let
-        system = "x86_64-linux";
-    pkgs = nixpkgs.legacyPackages.${system};
-    legacy = import r423 { inherit system; };
-    in {
+            pkgs = nixpkgs.legacyPackages.${system};
+            legacy = import r423 { inherit system; };
+    in nixpkgs.lib.nixosSystem {
+        inherit system;
 
-        nixosConfigurations.main = nixpkgs.lib.nixosSystem {
-            system = system;
-            modules = [
-                ./configuration.nix
-            ];
-        };
-        homeConfigurations.main = home-manager.lib.homeManagerConfiguration {
-            pkgs = nixpkgs.legacyPackages.x86_64-linux;
-
-            modules = [
-            { nixpkgs.overlays = [ (import neovim-nightly-overlay) ]; }
+        modules = [
+            ./hosts/${hostPath}/configuration.nix
+            home-manager.nixosModules.home-manager
             {
-                home.username = "ian";
-                home.homeDirectory = "/home/ian";
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
 
-                _module.args = {
-                    inherit legacy confdev;
+                home-manager.users.ian = {
+                    imports = [ ./hosts/${hostPath}/home.nix ];
+                    _module.args = { inherit legacy;} // extraHMArgs;
                 };
             }
-
-            ./home.nix
-            ];
-        };
+        ];
     };
+    in 
+    
+  {
+    # -------------------------
+    # Desktop host
+    # -------------------------
+    nixosConfigurations.main-desktop = mkSystem {
+      system = "x86_64-linux";
+      hostPath = "main-desktop";
+      extraHMArgs = { confdev = confdev; };
+    };
+
+    # -------------------------
+    # Raspberry Pi host (when ready)
+    # -------------------------
+    # nixosConfigurations.raspberry-pi = mkSystem {
+    #   system = "aarch64-linux";
+    #   hostPath = "raspberrypi";
+    # };
+  };
 }

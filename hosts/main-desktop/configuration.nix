@@ -4,6 +4,7 @@
 {
 imports = [ 
 ./hardware-configuration.nix 
+../../hosts/shared/common.nix
 ];
 fileSystems."/boot/windows" = {
   device = "/dev/disk/by-partuuid/cfa885dc-11c0-435e-aef0-31eaca328470";
@@ -11,26 +12,27 @@ fileSystems."/boot/windows" = {
   options = [ "umask=0000" ];
 };
 
-fileSystems."/boot/EFI/Microsoft" = {
-  device = "/boot/windows/EFI/Microsoft";
+fileSystems."/boot/efi/microsoft" = {
+  device = "/boot/windows/efi/microsoft";
   fsType = "none";
   options = [ "bind" ];
 };
 
 boot.loader = {
-    systemd-boot= {
-        enable = true;
-        extraEntries = {
-            "windows.conf" = ''
-            title Windows 11
-            efi /EFI/Microsoft/Boot/bootmgfw.efi
-            '';
-        };
+  systemd-boot = {
+    enable = true;
+    extraEntries = {
+      "windows.conf" = ''
+        title Windows 11
+        efi /EFI/Microsoft/Boot/bootmgfw.efi
+      '';
     };
-    efi.canTouchEfiVariables = true;
+  };
+
+  efi.canTouchEfiVariables = true;
 };
 
-networking.hostName = "GP-linux";
+networking.hostName = "gp-linux";
 networking.networkmanager.enable = true;
 
 time.timeZone = "America/Los_Angeles";
@@ -51,7 +53,7 @@ services.greetd = {
     enable = true;
     settings = {
         default_session = {
-            command = "${pkgs.tuigreet}/bin/tuigreet --time --greeting 'Welcome' --cmd Hyprland";
+            command = "${pkgs.tuigreet}/bin/tuigreet --time --greeting 'welcome' --cmd hyprland";
             user = "ian";
         };
     };
@@ -63,7 +65,7 @@ virtualisation.docker = {
     enable = true;
 };
 
-# NVIDIA settings ?
+# nvidia settings ?
 boot.initrd.kernelModules = [
     "nvidia"
     "nvidia_modeset"
@@ -85,7 +87,7 @@ hardware.nvidia = {
 };
 
 environment.sessionVariables = {
-# GBM_BACKEND = "nvidia-drm";
+# gbm_backend = "nvidia-drm";
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
 
     NIX_OZONE_WL = "1";
@@ -104,7 +106,7 @@ users.users.ian = {
 
 
 environment.systemPackages = with pkgs; [
-# C++ toolchain
+# c++ toolchain
     gcc gnumake cmake ninja clang clang-tools pkg-config gdb unzip
     gfortran
     nvidia-vaapi-driver
@@ -149,19 +151,6 @@ programs.gnupg.agent = {
     enableSSHSupport = true;
     pinentryPackage = pkgs.pinentry-qt;
 };
-
-
-
-# List services that you want to enable:
-
-# Enable the OpenSSH daemon.
-# services.openssh.enable = true;
-
-# Open ports in the firewall.
-# networking.firewall.allowedTCPPorts = [ ... ];
-# networking.firewall.allowedUDPPorts = [ ... ];
-# Or disable the firewall altogether.
-# networking.firewall.enable = false;
 
 }
 
