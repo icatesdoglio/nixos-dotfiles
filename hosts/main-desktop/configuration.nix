@@ -32,6 +32,8 @@ boot.loader = {
   efi.canTouchEfiVariables = true;
 };
 
+boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
 networking.hostName = "gp-linux";
 networking.networkmanager.enable = true;
 
