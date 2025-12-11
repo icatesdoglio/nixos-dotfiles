@@ -27,15 +27,13 @@
       # Custom cli
       (confdev.packages.${pkgs.system}.default)
 
+
       tree
           tree-sitter
           ripgrep
-          uv
 
           # Python
-          python313
-          python3Packages.pip
-          pyright
+          uv python313 python3Packages.pip pyright
 
           # Rust (using rustup)
           rustup
@@ -53,7 +51,7 @@
           pkgs.gcr
 
 
-          gh delta nushell zoxide starship
+          gh delta nushell zoxide starship jq htop
 
           bibata-cursors
 

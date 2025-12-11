@@ -53,9 +53,9 @@ banner --short
 
 def nbc [] {
 
-      sudo nixos-rebuild switch --flake ~/nixos-dotfiles#main
+      sudo nixos-rebuild switch --flake ~/nixos-dotfiles#main-desktop
 }
 
 def hbc [] {
-      home-manager switch --flake ~/nixos-dotfiles#main
+      home-manager switch --flake ~/nixos-dotfiles#main-desktop
 }
