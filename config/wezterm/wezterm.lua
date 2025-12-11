@@ -16,8 +16,6 @@ config.window_padding = {
     top = 0,
     bottom = 0,
 }
-
-
-config.default_prog = { "/home/ian/.nix-profile/bin/nu" }
+config.default_prog = { "/etc/profiles/per-user/ian/bin/nu" }
 
 return config

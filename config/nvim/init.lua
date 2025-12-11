@@ -1,5 +1,6 @@
-vim.g.mapleader = " " 
+vim.g.mapleader = " "
 vim.g.maplocalleader = " "
+
 
 vim.o.tabstop = 4
 vim.o.softtabstop = 4
@@ -21,12 +22,16 @@ vim.o.backspace="indent,eol,start"
 vim.o.syntax="on"
 
 vim.keymap.set("n", "<leader>o", ":update<CR>:source<CR>")
+vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
+vim.keymap.set("n", "<leader>[", "<cmd>cprev<CR>")
+vim.keymap.set("n", "<leader>]", "<cmd>cnext<CR>")
+
+
 
 vim.api.nvim_cmd({
 	cmd = "colorscheme",
 	args = { "unokai" }
 }, {})
-
 
 vim.pack.add({
     "https://github.com/stevearc/oil.nvim",
@@ -36,7 +41,8 @@ vim.pack.add({
     {
         src = "https://github.com/saghen/blink.cmp",
         version = vim.version.range("1.*"),
-    }
+    },
+    -- "https://github.com/nvim-treestter/nvim-treesitter",
 })
 
 vim.cmd.hi("Comment gui=none")
@@ -49,7 +55,8 @@ vim.api.nvim_set_hl(0, "LineNrBelow", { fg = "#F5BDE6", bold = false })
 vim.o.colorcolumn="80"
 vim.api.nvim_set_hl(0, "ColorColumn", { ctermbg = 0, bg = "#3A3A80" })
 
-require("oil").setup()
+local oil = require("oil").setup()
+
 vim.keymap.set("n", "<leader>f", function()
     local file = vim.api.nvim_buf_get_name(0)
     local dir = vim.fn.fnamemodify(file, ":h")
@@ -59,21 +66,91 @@ end)
 -- Picker Options
 local pick = require("mini.pick")
 
+-- Center Popup For mini.pick
 local win_config = function()
-    local height = math.floor(0.618 * vim.o.lines)
-    local width = math.floor(0.618 * vim.o.columns)
-    return {
-        anchor = 'NW', height = height, width = width,
-        row = math.floor(0.5 * (vim.o.lines - height)),
-        col = math.floor(0.5 * (vim.o.columns - width)),
-    }
+  local ui = vim.api.nvim_list_uis()[1]
+
+  local width  = math.floor(ui.width * 0.6)
+  local height = math.floor(ui.height * 0.6)
+
+  return {
+    relative = "editor",
+    anchor   = "NW",
+    width    = width,
+    height   = height,
+    row      = math.floor((ui.height - height) / 2),
+    col      = math.floor((ui.width - width) / 2),
+
+    style = "minimal",
+    border = "rounded",
+  }
 end
+
+-- Parse mini.pick grep-style encoded strings:
+--   "<file>\0<line>\0<col>\0<text>"
+local function parse_mini_item(raw)
+  if type(raw) ~= "string" then
+    return nil
+  end
+
+  local parts = vim.split(raw, "\000", { plain = true })
+  if #parts <= 1 then
+    return {
+      filename = raw,
+      lnum = 1,
+      col = 1,
+      text = raw,
+    }
+  end
+
+  return {
+    filename = parts[1],
+    lnum     = tonumber(parts[2]) or 1,
+    col      = tonumber(parts[3]) or 1,
+    text     = parts[4] or parts[1],
+  }
+end
+
+local function send_to_qf()
+  local matches = pick.get_picker_matches()
+  if not matches then return end
+
+  local raw_items =
+      (matches.marked and #matches.marked > 0 and matches.marked)
+      or matches.all
+      or matches.shown
+
+  if not raw_items then return end
+
+  local qf = {}
+
+  for _, raw in ipairs(raw_items) do
+    local item = parse_mini_item(raw)
+    if item then table.insert(qf, item) end
+  end
+
+  vim.fn.setqflist({}, " ", { title = "mini.pick results", items = qf })
+  vim.cmd("copen")
+end
+
 pick.setup({
-    config_from_bottom = true,
+    config_from_bottom = false,
     window = {
         config = win_config
     },
-    
+  mappings = {
+    choose        = "<CR>",
+    choose_marked = "<C-CR>",
+    mark          = "<Tab>",
+
+    send_to_qf = {
+      char = "<C-q>",
+      func = function(picker)
+        send_to_qf(picker)
+        return true  -- stop picker
+      end,
+    },
+  },
 })
 
 vim.keymap.set("n", "<leader>sf", pick.builtin.files)
@@ -109,6 +186,10 @@ vim.lsp.config("lua_ls", {
       diagnostics = {
         globals = { "vim" },
       },
+      workspace = {
+          library = vim.api.nvim_get_runtime_file("", true),
+          checkThirdParty = false,
+      }
     },
   },
 })
