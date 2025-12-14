@@ -5,90 +5,116 @@
   home.homeDirectory = "/home/ian";
   home.stateVersion = "25.05";
 
-  # Dotfiles
+# Dotfiles
   home.file.".config/hypr" = {
-      source = ../../config/hypr;
-      force = true;
+    source = ../../config/hypr;
+    force = true;
   };
   home.file.".config/waybar" = {
-      source = ../../config/waybar;
-      force = true;
+    source = ../../config/waybar;
+    force = true;
   };
   home.file.".config/git" = {
-      source = ../../config/git;
-      force = true;
+    source = ../../config/git;
+    force = true;
   };
   home.file.".config/wezterm" = {
-      source = ../../config/wezterm;
-      force = true;
+    source = ../../config/wezterm;
+    force = true;
   };
 
   home.packages = with pkgs; [
-      # Custom cli
-      (confdev.packages.${pkgs.system}.default)
+# Custom cli
+    (confdev.packages.${pkgs.system}.default)
 
 
       tree
-          tree-sitter
-          ripgrep
+      tree-sitter
+      ripgrep
 
-          # Python
-          uv python313 python3Packages.pip pyright
+# Python
+      uv python313 python3Packages.pip pyright
 
-          # Rust (using rustup)
-          rustup
+# Rust (using rustup)
+      rustup
 
-          #  # Two R versions + R LSP
-          R
-          (pkgs.writeShellScriptBin "R42" ''
-           exec ${legacy.rWrapper}/bin/R "$@"
-           '')
+# Two R versions + R LSP
+      R
+      (pkgs.writeShellScriptBin "R42" ''
+       exec ${legacy.rWrapper}/bin/R "$@"
+       '')
 
-          lua-language-server
-  
-          # Node (includes npm)
-          nodejs
-          pkgs.gcr
+      lua-language-server
+
+# Node (includes npm)
+      nodejs
+      pkgs.gcr
 
 
-          gh delta nushell zoxide starship jq htop
+      gh delta nushell zoxide starship jq htop
 
-          bibata-cursors
+      bibata-cursors
 
-          #testing
-          prismlauncher # Im not sold on this
-          ];
+#testing
+      prismlauncher # Im not sold on this
+      ];
 
   home.shellAliases = {
     nbc = "sudo nixos-rebuild switch --flake ~/nixos-dotfiles#main-desktop";
     hbc = "home-manager switch --flake ~/nixos-dotfiles#main-desktop";
   };
 
-home.sessionVariables = {
-  GPG_TTY = "$TTY";
-  XCURSOR_THEME = "Bibata-Modern-Ice";
-  XCURSOR_SIZE = "24";
+  home.sessionVariables = {
+    GPG_TTY = "$TTY";
+    XCURSOR_THEME = "Bibata-Modern-Ice";
+    XCURSOR_SIZE = "24";
 
-  # Optional, future-proof for hyprcursor animated themes
-  HYPRCURSOR_THEME = "Bibata-Modern-Ice";
-  HYPRCURSOR_SIZE = "24";
-};
+# Optional, future-proof for hyprcursor animated themes
+    HYPRCURSOR_THEME = "Bibata-Modern-Ice";
+    HYPRCURSOR_SIZE = "24";
+  };
 
   programs.neovim = {
-      enable = true;
-      extraPackages = with pkgs; [
-          tree-sitter
-      ];
+    enable = true;
+    extraPackages = with pkgs; [
+      tree-sitter
+    ];
   };
 
   programs.bash.enable = true;
   programs.git = {
-      enable = true;
-      settings = { core.pager = "delta"; };
+    enable = true;
+    settings = { core.pager = "delta"; };
   };
 
   programs.starship.enable = true;
   programs.zoxide.enable = true;
+
+  programs.ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+
+    matchBlocks = {
+      "*" = {
+        identitiesOnly = true;
+        serverAliveInterval = 30;
+        serverAliveCountMax = 3;
+        forwardAgent = false;
+      };
+
+      servemato = {
+        hostname = "10.100.0.1";
+        user = "ian";
+        identityFile = "~/.ssh/id_ed25519";
+      };
+
+      mini-mine = {
+        hostname = "10.100.0.3";
+        user = "ian_cd";
+        identityFile = "~/.ssh/id_ed25519";
+      };
+    };
+  };
 }
 
 # vim: ts=2 sts=2 sw=2 et
