@@ -4,8 +4,46 @@
 {
 imports = [ 
 ./hardware-configuration.nix 
-../../hosts/shared/common.nix
+../shared/common.nix
 ];
+networking = {
+    hostName = "gp-linux";
+
+    networkmanager = {
+      enable = true;
+      ensureProfiles.profiles."lan-static" = {
+        connection = {
+          id = "lan-static";
+          type = "ethernet";
+          interface-name = "enp6s0";
+          autoconnect = true;
+        };
+        ipv4 = {
+          method = "manual";
+          addresses = "192.168.0.20/24";
+          gateway = "192.168.0.1";
+          dns = "192.168.0.1;1.1.1.1";
+        };
+        ipv6.method = "ignore";
+      };
+    };
+    wireguard.interfaces.wg0 = {
+      ips = [ "10.100.0.2/24" ];
+      privateKeyFile = "/etc/wireguard/desktop.key";
+
+      peers = [
+      {
+        publicKey = "Cc+IKGfzGNfcS4/InZY89EBtPvXydjs4Ae5/AgBmq0Y=";
+        endpoint = "192.168.0.30:51820";
+        allowedIPs = [ "10.100.0.0/24" ];
+        persistentKeepalive = 25;
+      }
+      ];
+    };
+
+    firewall.interfaces.wg0.allowedTCPPorts = [ 22 ];
+};
+
 fileSystems."/boot/windows" = {
   device = "/dev/disk/by-partuuid/cfa885dc-11c0-435e-aef0-31eaca328470";
   fsType = "vfat";
@@ -34,16 +72,30 @@ boot.loader = {
 
 boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
-networking.hostName = "gp-linux";
-networking.networkmanager.enable = true;
+systemd.services.systemd-binfmt.enable = true;
 
-time.timeZone = "America/Los_Angeles";
 
-services.xserver.videoDrivers = [ "nvidia" ];
-
-services.pipewire = {
+services = {
+  xserver.videoDrivers = [ "nvidia" ];
+  pipewire = {
     enable = true;
     pulse.enable = true;
+  };
+  greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.tuigreet}/bin/tuigreet --time --greeting 'welcome' --cmd hyprland";
+        user = "ian";
+      };
+    };
+  };
+  openssh.listenAddresses = [
+  {
+    addr = "10.100.0.2";
+    port = 22;
+  }
+  ];
 };
 
 programs.hyprland = {
@@ -51,23 +103,10 @@ programs.hyprland = {
     xwayland.enable = true;
 };
 
-services.greetd = {
-    enable = true;
-    settings = {
-        default_session = {
-            command = "${pkgs.tuigreet}/bin/tuigreet --time --greeting 'welcome' --cmd hyprland";
-            user = "ian";
-        };
-    };
-};
 
 programs.firefox.enable = true;
 
-virtualisation.docker = {
-    enable = true;
-};
-
-# nvidia settings ?
+# nvidia settings
 boot.initrd.kernelModules = [
     "nvidia"
     "nvidia_modeset"
@@ -101,29 +140,22 @@ environment.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "1";
 };
 
-users.users.ian = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" "video" "audio" "networkmanager" "docker" ];
-};
+# Extra Permissions for dealing with the desktop environment
+users.users.ian.extraGroups = lib.mkAfter [ "video" "audio" "networkmanager" ];
 
 
-environment.systemPackages = with pkgs; [
-# c++ toolchain
+environment.systemPackages = lib.mkAfter (with pkgs; [
+    # c++ toolchain
     gcc gnumake cmake ninja clang clang-tools pkg-config gdb unzip
     gfortran
+
     nvidia-vaapi-driver
 
-    vim
-    wget
-    foot
-    waybar
-    wezterm
-    cliphist
-    wl-clipboard
-    gnupg
-    wofi
-    hyprpaper
-];
+    foot waybar wezterm wofi hyprpaper
+
+    cliphist wl-clipboard
+    wireguard-tools
+]);
 
 fonts = {
     enableDefaultPackages = true;
@@ -141,35 +173,29 @@ nix.settings = {
       "https://nixos-raspberrypi.cachix.org"
     ];
 
+    extra-platforms = [ "aarch64-linux" ];
+
     trusted-public-keys = [
         "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
     ];
 
     trusted-users = [ "root" "ian" ];
 
+    secret-key-files = [
+        "/etc/nix/desktop-cache.key"
+    ];
+
+    builders-use-substitutes = true;
+
 };
+
+swapDevices = [{
+    device = "/swapfile";
+    size = 8192;
+}];
 
 system.stateVersion = "25.05";
 
-services.openssh = {
-    enable = true;
-    settings.PasswordAuthentication = true;
-    settings.PermitRootLogin = "no";
-};
-
-swapDevices = [
-{
-    device = "/swapfile";
-    size = 8192;
-}
-];
-
-programs.gnupg.agent = {
-    enable = true;
-    enableSSHSupport = true;
-    pinentryPackage = pkgs.pinentry-qt;
-};
-
-
 }
 
+# vim: ts=2 sts=2 sw=2 et
