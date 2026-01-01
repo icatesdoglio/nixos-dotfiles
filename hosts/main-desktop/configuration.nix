@@ -44,36 +44,26 @@ networking = {
     firewall.interfaces.wg0.allowedTCPPorts = [ 22 ];
 };
 
-fileSystems."/boot/windows" = {
-  device = "/dev/disk/by-partuuid/cfa885dc-11c0-435e-aef0-31eaca328470";
-  fsType = "vfat";
-  options = [ "umask=0000" ];
-};
 
-fileSystems."/boot/efi/microsoft" = {
-  device = "/boot/windows/efi/microsoft";
-  fsType = "none";
-  options = [ "bind" ];
-};
-
-boot.loader = {
+boot = {
+  loader = {
   systemd-boot = {
     enable = true;
-    extraEntries = {
-      "windows.conf" = ''
-        title Windows 11
-        efi /EFI/Microsoft/Boot/bootmgfw.efi
-      '';
-    };
   };
 
   efi.canTouchEfiVariables = true;
+  };
+  binfmt.emulatedSystems = [ "aarch64-linux" ];
 };
-
-boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
 systemd.services.systemd-binfmt.enable = true;
 
+services.openssh.listenAddresses = [
+  {
+    addr = "10.100.0.2";
+    port = 22;
+  }
+  ];
 
 services = {
   xserver.videoDrivers = [ "nvidia" ];
@@ -81,26 +71,11 @@ services = {
     enable = true;
     pulse.enable = true;
   };
-  greetd = {
-    enable = true;
-    settings = {
-      default_session = {
-        command = "${pkgs.tuigreet}/bin/tuigreet --time --greeting 'welcome' --cmd hyprland";
-        user = "ian";
-      };
-    };
-  };
-  openssh.listenAddresses = [
-  {
-    addr = "10.100.0.2";
-    port = 22;
-  }
-  ];
 };
 
 programs.hyprland = {
-    enable = true;
-    xwayland.enable = true;
+  enable = true;
+  xwayland.enable = true;
 };
 
 
@@ -108,10 +83,10 @@ programs.firefox.enable = true;
 
 # nvidia settings
 boot.initrd.kernelModules = [
-    "nvidia"
-    "nvidia_modeset"
-    "nvidia_uvm"
-    "nvidia_drm"
+  "nvidia"
+  "nvidia_modeset"
+  "nvidia_uvm"
+  "nvidia_drm"
 ];
 
 nixpkgs.config.allowUnfree = true;
@@ -119,8 +94,8 @@ nixpkgs.config.allowUnfree = true;
 hardware.graphics.enable = true;
 
 hardware.nvidia = {
-    modesetting.enable = true;
-    open = false;
+  modesetting.enable = true;
+  open = false;
     nvidiaSettings = true;
     powerManagement.enable = true;
     powerManagement.finegrained = false;
@@ -154,6 +129,7 @@ environment.systemPackages = lib.mkAfter (with pkgs; [
     foot waybar wezterm wofi hyprpaper
 
     cliphist wl-clipboard
+
     wireguard-tools
 ]);
 
@@ -166,14 +142,6 @@ fonts = {
 };
 
 nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
-
-    substituters = [
-      "https://cache.nixos.org"
-      "https://nixos-raspberrypi.cachix.org"
-    ];
-
-    extra-platforms = [ "aarch64-linux" ];
 
     trusted-public-keys = [
         "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
@@ -194,7 +162,7 @@ swapDevices = [{
     size = 8192;
 }];
 
-system.stateVersion = "25.05";
+system.stateVersion = "26.05";
 
 }
 

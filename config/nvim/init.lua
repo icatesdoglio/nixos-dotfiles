@@ -199,6 +199,18 @@ vim.lsp.enable("rust_analyzer")
 -- vim.lsp.config("rust_analyzer", {
 --     settings = {}
 -- })
+--
+vim.lsp.enable("nixd")
+vim.lsp.config("nixd", {
+    settings = {
+        nixpkgs = {
+            expr = "import <nixpkgs> {}",
+        },
+        formatting = {
+            command = { "alejandra" },
+        },
+    },
+})
 
 local blink = require("blink.cmp")
 

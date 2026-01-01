@@ -29,7 +29,7 @@
       allowedUDPPorts = [ 51820 ];
       interfaces.wg0 = {
         allowedUDPPorts = [ 53 ];
-        allowedTCPPorts = [ 22 53 ];
+        allowedTCPPorts = [ 22 53 80 ];
       };
     };
 
@@ -124,6 +124,29 @@
       port = 22;
         }
       ];
+    nextcloud = {
+      enable = true;
+
+      hostName = "localhost";
+      https = false;
+      
+      package = pkgs.nextcloud32;
+
+      datadir = "/mnt/nc-data";
+
+      config = {
+        adminuser = "admin";
+        adminpassFile = "/etc/nextcloud-admin-pass";
+        dbtype = "pgsql";
+      };
+
+      database.createLocally = true;
+
+    };
+
+    postgresql.enable = true;
+    redis.servers.nextcloud.enable = true;
+
   };
 
 
@@ -140,7 +163,7 @@
     trusted-users = [ "root" "ian" ];
   };
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "26.05";
 }
 
 # vim: ts=2 sts=2 sw=2 et

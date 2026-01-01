@@ -58,12 +58,12 @@
       (import neovim-nightly-overlay)
     ];
 
-    # Your mkSystem for desktop + HM integration
     mkSystem = { system, hostPath, enableHM ? false, extraHMArgs ? {} }:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        legacy = import r423 { inherit system; };
-      in
+      legacy = import r423 {
+          system = system;
+      };
+    in
       nixpkgs.lib.nixosSystem {
         inherit system;
 
@@ -71,10 +71,11 @@
           inherit inputs legacy nixpkgs confdev;
         } // extraHMArgs;
 
-        modules =
-          [
-            ./hosts/${hostPath}/configuration.nix
-            { nixpkgs.overlays = overlays; }
+        modules = [
+              ./users
+              ./modules
+              ./hosts/${hostPath}
+              { nixpkgs.overlays = overlays; }
           ]
           ++ (if enableHM then [
             home-manager.nixosModules.home-manager
@@ -82,7 +83,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.users.ian = {
-                imports = [ ./hosts/${hostPath}/home.nix ];
+                imports = [ ./home ./hosts/${hostPath}/home.nix ];
                 _module.args = extraHMArgs // { inherit legacy; };
               };
             }
@@ -96,7 +97,7 @@
     nixosConfigurations = {
 
       ##########################################################################
-      # 1. MAIN DESKTOP — unchanged
+      # 1. MAIN DESKTOP
       ##########################################################################
       main-desktop = mkSystem {
         system = "x86_64-linux";
@@ -106,24 +107,20 @@
       };
 
       ##########################################################################
-      # 2. RASPBERRY PI 5 — using nvmd image builder correctly
+      # 2. RASPBERRY PI 5 — using nvmd image builder
       ##########################################################################
       raspberry-pi = nixos-raspberrypi.lib.nixosSystem {
         system = "aarch64-linux";
 
-        # makes Pi modules + firmware + extlinux boot generation work
         specialArgs = inputs;
 
         modules = [
-          # Enable Pi 5 hardware, firmware, bootloader, config.txt generation
           ({ ... }: {
             imports = with nixos-raspberrypi.nixosModules; [
               raspberry-pi-5.base
               raspberry-pi-5.bluetooth
             ];
           })
-
-          # Your manually written config for normal system settings
           ./hosts/raspberrypi/configuration.nix
         ];
       };
