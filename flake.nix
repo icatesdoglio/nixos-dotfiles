@@ -23,7 +23,11 @@
       flake = false;
     };
 
-    confdev.url = "path:/home/ian/confdev";
+    confdev.url = "path:/home/ian/src/confdev";
+    suckless = {
+        url = "path:/home/ian/src/suckless";
+        flake = false;
+    };
   };
 
   ##############################################################################
@@ -38,11 +42,13 @@
     home-manager,
     r423,
     confdev,
+    suckless,
     ...
   }:
   let
     overlays = [
       (import neovim-nightly-overlay)
+      self.overlays.suckless
     ];
 
   mkSystem = { system, 
@@ -84,7 +90,12 @@
       };
   in
   {
-    ############################################################################
+      overlays.suckless =
+          import ./overlays/suckless.nix {
+              inputs = { inherit suckless; };
+          };
+
+############################################################################
     # Your systems
     ############################################################################
     nixosConfigurations = {
