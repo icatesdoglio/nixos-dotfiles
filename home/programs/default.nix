@@ -1,0 +1,8 @@
+{
+    imports = [
+        ./nvim.nix
+        ./git.nix
+        ./wezterm.nix
+        ./ssh.nix
+    ];
+}
