@@ -122,7 +122,6 @@ users.users.ian.extraGroups = lib.mkAfter [ "video" "audio" "networkmanager" ];
 environment.systemPackages = lib.mkAfter (with pkgs; [
     # c++ toolchain
     gcc gnumake cmake ninja clang clang-tools pkg-config gdb unzip
-    gfortran
 
     nvidia-vaapi-driver
 

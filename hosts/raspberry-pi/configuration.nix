@@ -1,9 +1,8 @@
-{ config, pkgs, lib, modulesPath, ... }:
+{ pkgs, ... }:
 
 {
   imports = [
     ./hardware-configuration.nix
-    ../shared/common.nix
   ];
 
 

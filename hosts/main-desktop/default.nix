@@ -6,7 +6,11 @@
         ./hardware-configuration.nix
     ];
 
-    networking.hostName = "gp-linux";
+    my.host = {
+        name = "gp-linux";
+        role = "desktop";
+        platform = "x86_64";
+    };
 
     my.networking.wireguard = {
         enable = true;
@@ -29,10 +33,7 @@
     };
     my.networking.ipv6.method = "auto";
 
-    my.services.ssh = {
-        enable = true;
-        bindToWireguard = true;
-    };
+    my.services.ssh.enable = true;
 
     networking.networkmanager.ensureProfiles.profiles."lan-static" = {
         connection = {
@@ -50,12 +51,12 @@
     };
 
 
-    my.boot.systemd = {
+    my.system.binfmt = {
         enable = true;
-        emulateAarch64 = true; # To build the Raspberry Pi
+        emulateAarch64 = true; # to cross compile the raspberry-pi
     };
 
-    # Desktop Environment
+# Desktop Environment
     my.desktop.audio.enable = true;
     my.desktop.fonts.enable = true;
     my.hardware.nvidia.enable = true;

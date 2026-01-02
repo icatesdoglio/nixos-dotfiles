@@ -16,7 +16,7 @@ in
 
   config = lib.mkIf cfg.enable {
     home.packages =
-      [ pkgs.foot pkgs.wofi pkgs.hyprpaper pkgs.cliphist pkgs.wl-clipboard ]
+      [ pkgs.foot pkgs.wofi pkgs.hyprpaper pkgs.cliphist pkgs.wl-clipboard pkgs.nushell ]
       ++ lib.optional cfg.withWaybar pkgs.waybar;
 
     home.file = {

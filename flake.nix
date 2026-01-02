@@ -27,19 +27,6 @@
   };
 
   ##############################################################################
-  # Cache for nvmd prebuilt Pi images
-  ##############################################################################
-
-  nixConfig = {
-    extra-substituters = [
-      "https://nixos-raspberrypi.cachix.org"
-    ];
-    extra-trusted-public-keys = [
-      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
-    ];
-  };
-
-  ##############################################################################
   # Outputs
   ##############################################################################
 
@@ -58,7 +45,12 @@
       (import neovim-nightly-overlay)
     ];
 
-    mkSystem = { system, hostPath, enableHM ? false, extraHMArgs ? {} }:
+  mkSystem = { system, 
+      hostPath, 
+      enableHM ? false, 
+      extraHMArgs ? {},
+      extraModules ? []
+      }:
       let
       legacy = import r423 {
           system = system;
@@ -77,6 +69,7 @@
               ./hosts/${hostPath}
               { nixpkgs.overlays = overlays; }
           ]
+          ++extraModules
           ++ (if enableHM then [
             home-manager.nixosModules.home-manager
             {
@@ -109,21 +102,23 @@
       ##########################################################################
       # 2. RASPBERRY PI 5 — using nvmd image builder
       ##########################################################################
-      raspberry-pi = nixos-raspberrypi.lib.nixosSystem {
+    raspberry-pi = nixos-raspberrypi.lib.nixosSystem {
         system = "aarch64-linux";
-
         specialArgs = inputs;
 
         modules = [
-          ({ ... }: {
-            imports = with nixos-raspberrypi.nixosModules; [
-              raspberry-pi-5.base
-              raspberry-pi-5.bluetooth
-            ];
-          })
-          ./hosts/raspberrypi/configuration.nix
+            ({ ... }: {
+             imports = with nixos-raspberrypi.nixosModules; [
+             raspberry-pi-5.base
+             raspberry-pi-5.bluetooth
+             ];
+             })
+            ./users
+            ./modules
+        ./modules/boot/raspberry-pi.nix
+            ./hosts/raspberry-pi/default.nix
         ];
-      };
+    };
     };
   };
 }

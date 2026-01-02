@@ -26,19 +26,17 @@ in
 
     services.openssh.listenAddresses =
       lib.mkIf (cfg.bindToWireguard && wgIp != null) [
-        {
-          addr = wgIp;
-          port = 22;
-        }
+        { addr = "127.0.0.1"; port = 22; }
+        { addr = wgIp;        port = 22; }
       ];
 
     assertions = [
       {
-        assertion =
-          !(cfg.bindToWireguard) || wgIp != null;
+        assertion = !cfg.bindToWireguard || wgIp != null;
         message =
-          "SSH bindToWireguard requires WireGuard interface wg0 with at least one IP";
+          "SSH bindToWireguard requires WireGuard interface wg0 with an IP";
       }
     ];
   };
 }
+

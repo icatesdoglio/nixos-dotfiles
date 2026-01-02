@@ -78,9 +78,8 @@ in
       #################################
       ++ lib.optionals cfg.cpp.enable (with pkgs; [
         gcc gnumake cmake ninja
-        clang clang-tools
+        clang-tools
         pkg-config gdb unzip
-        gfortran
       ])
 
       #################################
