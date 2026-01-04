@@ -24,10 +24,7 @@
     };
 
     confdev.url = "path:/home/ian/src/confdev";
-    suckless = {
-        url = "path:/home/ian/src/suckless";
-        flake = false;
-    };
+    suckless.url = "path:/home/ian/src/suckless";
   };
 
   ##############################################################################
@@ -35,7 +32,6 @@
   ##############################################################################
 
   outputs = inputs@{
-    self,
     nixpkgs,
     nixos-raspberrypi,
     neovim-nightly-overlay,
@@ -48,7 +44,6 @@
   let
     overlays = [
       (import neovim-nightly-overlay)
-      self.overlays.suckless
     ];
 
   mkSystem = { system, 
@@ -90,10 +85,6 @@
       };
   in
   {
-      overlays.suckless =
-          import ./overlays/suckless.nix {
-              inputs = { inherit suckless; };
-          };
 
 ############################################################################
     # Your systems
@@ -107,7 +98,7 @@
         system = "x86_64-linux";
         hostPath = "main-desktop";
         enableHM = true;
-        extraHMArgs = { confdev = confdev; };
+        extraHMArgs = { confdev = confdev; suckless = suckless; };
       };
 
       ##########################################################################

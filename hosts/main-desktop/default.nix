@@ -56,11 +56,18 @@
         emulateAarch64 = true; # to cross compile the raspberry-pi
     };
 
-# Desktop Environment
-    my.desktop.audio.enable = true;
-    my.desktop.fonts.enable = true;
+    # Desktop Environment
     my.hardware.nvidia.enable = true;
-    my.desktop.hyprland.enable = true;
+    my.desktop = {
+
+        enable = true;
+
+        hyprland.enable = true;
+        dwm.enable = true;
+        river.enable = true;
+
+        useDisplayManager = false;
+    };
 
     nix.settings.secret-key-files = [
         "/etc/nix/desktop-cache.key"

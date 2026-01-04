@@ -27,11 +27,22 @@ vim.keymap.set("n", "<leader>[", "<cmd>cprev<CR>")
 vim.keymap.set("n", "<leader>]", "<cmd>cnext<CR>")
 
 
+local wal_vim = vim.fn.expand("~/.cache/wal/colors-wal.vim")
 
-vim.api.nvim_cmd({
-	cmd = "colorscheme",
-	args = { "unokai" }
-}, {})
+if vim.fn.filereadable(wal_vim) == 1 then
+    vim.cmd("source" .. wal_vim)
+else
+    vim.notify("pywal colors not found", vim.log.levels.WARN)
+    vim.api.nvim_cmd({
+        cmd = "colorscheme",
+        args = { "unokai" }
+    }, {})
+end
+vim.o.termguicolors = true
+vim.api.nvim_set_hl(0, "Normal", {bg = "none"})
+vim.api.nvim_set_hl(0, "NormalFloat", {bg = "none"})
+vim.api.nvim_set_hl(0, "SignColumn", {bg = "none"})
+vim.api.nvim_set_hl(0, "EndOfBuffer", {bg = "none"})
 
 vim.pack.add({
     "https://github.com/stevearc/oil.nvim",
@@ -51,9 +62,11 @@ vim.api.nvim_set_hl(0, "LineNrAbove", { fg = "#BB9AF7", bold = false })
 vim.api.nvim_set_hl(0, "LineNr", { fg = "#FFA500", bold = false })
 vim.api.nvim_set_hl(0, "LineNrBelow", { fg = "#F5BDE6", bold = false })
 
--- 80 character mark
-vim.o.colorcolumn="80"
-vim.api.nvim_set_hl(0, "ColorColumn", { ctermbg = 0, bg = "#3A3A80" })
+
+vim.o.signcolumn = "yes"
+-- -- 80 character mark
+-- vim.o.colorcolumn="80"
+-- vim.api.nvim_set_hl(0, "ColorColumn", { ctermbg = 0, bg = "#3A3A80" })
 
 local oil = require("oil").setup()
 
@@ -179,10 +192,6 @@ vim.lsp.config("lua_ls", {
   settings = {
     Lua = {
       runtime = { version = "LuaJIT" },
-      workspace = {
-        library = vim.api.nvim_get_runtime_file("", true),
-        checkThirdParty = false,
-      },
       diagnostics = {
         globals = { "vim" },
       },
@@ -233,3 +242,9 @@ vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 
 
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "nix",
+  callback = function()
+    vim.bo.indentexpr = "GetNixIndent()"
+  end,
+})
