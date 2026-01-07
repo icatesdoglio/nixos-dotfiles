@@ -1,0 +1,14 @@
+# -----------------------
+# Tags (dwm-style 1–9)
+# -----------------------
+
+for i in $(seq 1 9); do
+  tag=$((1 << (i - 1)))
+
+  # View tag
+  riverctl map normal $MOD $i set-focused-tags $tag
+
+  # Move focused window to tag
+  riverctl map normal $MOD Shift $i set-view-tags $tag
+done
+

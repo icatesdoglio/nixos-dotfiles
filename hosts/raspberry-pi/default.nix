@@ -35,6 +35,10 @@
         publicKey = "GXxa4bsYmIeLdvnznaNiX8kzOwfjoRCJTMG3uUrFCXk=";
         allowedIPs = [ "10.100.0.3/32" ];
       }
+      { # Mac Mini
+        publicKey = "mx/c3oFZwTQ824bA4kXPyr+CU0qVLO28imgENyEZgUU=";
+        allowedIPs = [ "10.100.0.5/32" ];
+      }
     ];
   };
 

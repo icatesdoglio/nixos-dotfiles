@@ -49,6 +49,7 @@ vim.pack.add({
     "https://github.com/echasnovski/mini.nvim",
     "https://github.com/neovim/nvim-lspconfig",
     "https://github.com/rafamadriz/friendly-snippets",
+    "https://tpope.io/vim/fugitive",
     {
         src = "https://github.com/saghen/blink.cmp",
         version = vim.version.range("1.*"),

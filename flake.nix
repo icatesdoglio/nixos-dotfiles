@@ -32,6 +32,7 @@
   ##############################################################################
 
   outputs = inputs@{
+      self, 
     nixpkgs,
     nixos-raspberrypi,
     neovim-nightly-overlay,
@@ -45,6 +46,8 @@
     overlays = [
       (import neovim-nightly-overlay)
     ];
+
+    dotfiles = self;
 
   mkSystem = { system, 
       hostPath, 
@@ -94,11 +97,11 @@
       ##########################################################################
       # 1. MAIN DESKTOP
       ##########################################################################
-      main-desktop = mkSystem {
+      gp-linux = mkSystem {
         system = "x86_64-linux";
         hostPath = "main-desktop";
         enableHM = true;
-        extraHMArgs = { confdev = confdev; suckless = suckless; };
+        extraHMArgs = { confdev = confdev; suckless = suckless; dotfiles = dotfiles; };
       };
 
       ##########################################################################

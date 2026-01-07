@@ -7,7 +7,7 @@ let
   nvidiaEnabled = config.my.hardware.nvidia.enable or false;
 
   # make sure to register new desktops with the correct environment
-  anyWaylandEnabled = cfg.hyprland.enable || cfg.river.enable;
+  anyWaylandEnabled = cfg.hyprland.enable || cfg.river.enable || cfg.plasma.enable;
   anyX11Enabled = cfg.dwm.enable;
 
 in
@@ -18,6 +18,7 @@ in
         ./hyprland.nix
         ./dwm.nix
         ./river.nix
+        ./plasma.nix
     ];
   options.my.desktop = {
     enable = mkOption {

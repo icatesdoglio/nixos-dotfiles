@@ -64,7 +64,8 @@
 
         hyprland.enable = true;
         dwm.enable = true;
-        river.enable = true;
+        river.enable = false;
+        plasma.enable = true;
 
         useDisplayManager = false;
     };

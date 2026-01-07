@@ -1,4 +1,4 @@
-{ lib, config, pkgs, ... }:
+{ lib, config, pkgs, dotfiles, ... }:
 
 let
   cfg = config.my.hm.programs.neovim;
@@ -16,10 +16,10 @@ in
     home.packages = with pkgs; [ tree-sitter ];
 
     home.file.".config/nvim" = {
-      source = ../../config/nvim;
-      recursive = true;
-      force = true;
+        source = dotfiles + "/config/nvim";
+        force = true;
     };
+
   };
 }
 
