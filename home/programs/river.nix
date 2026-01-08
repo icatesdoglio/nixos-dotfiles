@@ -19,7 +19,6 @@ in
     # Own the River config directory, just like nvim
     home.file.".config/river" = {
       source = ../../config/river;
-      recursive = true;
       force = true;
     };
     home.sessionPath = [

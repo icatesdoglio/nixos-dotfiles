@@ -99,7 +99,7 @@
       ##########################################################################
       gp-linux = mkSystem {
         system = "x86_64-linux";
-        hostPath = "main-desktop";
+        hostPath = "gp-linux";
         enableHM = true;
         extraHMArgs = { confdev = confdev; suckless = suckless; dotfiles = dotfiles; };
       };
@@ -107,7 +107,7 @@
       ##########################################################################
       # 2. RASPBERRY PI 5 — using nvmd image builder
       ##########################################################################
-    raspberry-pi = nixos-raspberrypi.lib.nixosSystem {
+    ServeMato = nixos-raspberrypi.lib.nixosSystem {
         system = "aarch64-linux";
         specialArgs = inputs;
 

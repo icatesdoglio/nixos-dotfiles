@@ -12,7 +12,6 @@ in
 
     home.file.".config/wezterm" = {
       source = ../../config/wezterm;
-      recursive = true;
       force = true;
     };
   };
