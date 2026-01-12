@@ -1,22 +1,21 @@
-{ lib, config, pkgs, suckless, ... }:
+{ config, lib, suckless, pkgs, ... }:
 
 let
-  cfg = config.my.hm.desktop.dwm;
+  system = pkgs.system;
 in
 {
-  options.my.hm.desktop.dwm.enable = lib.mkEnableOption "Enable dwm (suckless window manager)";
+  options.my.hm.desktop.dwm.enable =
+    lib.mkEnableOption "Enable dwm";
 
-  config = lib.mkIf cfg.enable {
-    home.packages = with pkgs; [
-      xclip
-      feh
-      picom
-      pywal16
-    ] ++ [
-      suckless.packages.${pkgs.system}.dwm
-      suckless.packages.${pkgs.system}.dmenu
-      suckless.packages.${pkgs.system}.st
-      suckless.packages.${pkgs.system}.dwmblocks
+  config = lib.mkIf config.my.hm.desktop.dwm.enable {
+
+    home.packages = [
+      suckless.packages.${system}.dwm
+      suckless.packages.${system}.dmenu
+      suckless.packages.${system}.st
+      suckless.packages.${system}.dwmblocks
     ];
+
   };
 }
+

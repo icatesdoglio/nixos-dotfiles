@@ -21,6 +21,7 @@ in {
       defaultGateway = cfg.gateway;
       nameservers = cfg.nameservers;
     };
+    services.resolved.enable = false;
   };
 }
 

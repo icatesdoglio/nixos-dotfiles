@@ -12,12 +12,14 @@
         platform = "x86_64";
     };
 
-    my.networking.wireguard = {
-        enable = true;
-
-        interfaces.wg0 = {
-            ips = [ "10.100.0.2/24" ];
+    my.wireguard.enable = true;
+    my.wireguard = {
+        interfaces = {
+            mode = "client";
+            interface = "wg0";
             privateKeyFile = "/etc/wireguard/desktop.key";
+
+            address = "10.100.0.2/32";
 
             peers = [
             {
@@ -27,10 +29,9 @@
                 persistentKeepalive = 25;
             }
             ];
-        };
 
-        firewallTCPPorts = [ 22 ];
-    };
+        };
+    };   
     my.networking.ipv6.method = "auto";
 
     my.services.ssh.enable = true;
@@ -46,9 +47,13 @@
             method = "manual";
             addresses = "192.168.0.20/24";
             gateway = "192.168.0.1";
-            dns = "192.168.0.1;1.1.1.1";
+            dns = "10.100.0.1";
         };
     };
+
+    # networking.useHostResolvConf = false;
+    # networking.nameservers = [ "10.100.0.1" ];
+
 
 
     my.system.binfmt = {
