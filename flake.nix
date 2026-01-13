@@ -120,8 +120,19 @@
                     enableHM = true;
                     extraHMArgs = { confdev = confdev; suckless = suckless; dotfiles = dotfiles; };
                 };
+
+		/******************************
+		  Framework Laptop
+		 ******************************/
+		framework = mkSystem {
+		system = "x86_64-linux";
+		hostPath = "framework";
+		enableHM = true;
+		extraHMArgs = { confdev = confdev; suckless = suckless; dotfiles = dotfiles; };
+		};
+
                 /*********************************************
-                  2. RASPBERRY PI 5 — using nvmd image builder
+                  3. RASPBERRY PI 5 — using nvmd image builder
                  **********************************************/
                 ServeMato = nixos-raspberrypi.lib.nixosSystem {
                     system = "aarch64-linux";

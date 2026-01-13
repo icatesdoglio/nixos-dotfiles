@@ -3,7 +3,6 @@
 with lib;
 
 {
-  #### Options
   options.my.host = {
     name = mkOption {
       type = types.str;
@@ -11,7 +10,7 @@ with lib;
     };
 
     role = mkOption {
-      type = types.enum [ "desktop" "server" ];
+      type = types.enum [ "desktop" "laptop" "server" ];
       default = "desktop";
       description = "Host role";
     };
@@ -26,7 +25,6 @@ with lib;
     };
   };
 
-  #### Config
   config = {
     # Single source of truth for the system hostname
     networking.hostName = config.my.host.name;
