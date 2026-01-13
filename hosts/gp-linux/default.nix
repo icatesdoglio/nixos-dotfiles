@@ -1,4 +1,4 @@
-{ ... }:
+{ config, sops-nix, ... }:
 
 {
 
@@ -12,24 +12,50 @@
         platform = "x86_64";
     };
 
-    my.wireguard.enable = true;
+    /******
+      SOPS 
+     *****/
+    sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+
+    sops.secrets = {
+        "wg/surfshark/gplinux" = {
+            sopsFile = ../../secrets/wireguard.yaml;
+            format = "yaml";
+            path = "/etc/wireguard/wg-surf.key";
+            owner = "root";
+            group = "root";
+            mode = "0400";
+        };
+        "wg/lan/gplinux" = {
+            sopsFile = ../../secrets/wireguard.yaml;
+            format = "yaml";
+            path = "/etc/wireguard/wg0.key";
+            owner = "root";
+            group = "root";
+            mode = "0400";
+        };
+    };
+
+    /*************
+      VPN Settings
+     *************/
     my.wireguard = {
-        interfaces = {
+        enable = true;
+        interfaces.wg0 = {
             mode = "client";
             interface = "wg0";
-            privateKeyFile = "/etc/wireguard/desktop.key";
+            privateKeyFile = config.sops.secrets."wg/lan/gplinux".path;
 
             address = "10.100.0.2/32";
 
-            peers = [
-            {
-                publicKey = "Cc+IKGfzGNfcS4/InZY89EBtPvXydjs4Ae5/AgBmq0Y=";
-                endpoint = "192.168.0.30:51820";
-                allowedIPs = [ "10.100.0.0/24" ];
-                persistentKeepalive = 25;
-            }
-            ];
-
+            peers = {
+                servemato = {
+                    publicKey = "Cc+IKGfzGNfcS4/InZY89EBtPvXydjs4Ae5/AgBmq0Y=";
+                    endpoint = "192.168.0.30:51820";
+                    allowedIPs = [ "10.100.0.0/24" ];
+                    persistentKeepalive = 25;
+                };
+            };
         };
     };   
     my.networking.ipv6.method = "auto";
@@ -52,8 +78,23 @@
     };
 
     # networking.useHostResolvConf = false;
-    # networking.nameservers = [ "10.100.0.1" ];
+    networking.nameservers = [ "10.100.0.1" ];
 
+    systemd.services."wireguard-wg-surf".after = [
+        "network-online.target"
+            "nss-lookup.target"
+    ];
+    systemd.services."wireguard-wg-surf".wants = [
+        "network-online.target"
+    ];
+
+    systemd.services."wireguard-wg-surf-peer@".after = [
+        "network-online.target"
+            "nss-lookup.target"
+    ];
+    systemd.services."wireguard-wg-surf-peer@".wants = [
+        "network-online.target"
+    ];
 
 
     my.system.binfmt = {
@@ -61,7 +102,7 @@
         emulateAarch64 = true; # to cross compile the raspberry-pi
     };
 
-    # Desktop Environment
+# Desktop Environment
     my.hardware.nvidia.enable = true;
     my.desktop = {
 
