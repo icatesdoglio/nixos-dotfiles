@@ -4,5 +4,6 @@
         ./bootstrap.nix
         ./programs
         ./desktop
+        ./gaming
     ];
 }

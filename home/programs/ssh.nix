@@ -12,6 +12,7 @@ in
       enable = true;
       enableDefaultConfig = false;
 
+
       matchBlocks = {
         "*" = {
           identityAgent = "none";
@@ -34,6 +35,7 @@ in
         };
       };
     };
+    services.ssh-agent.enable = true;
   };
 }
 

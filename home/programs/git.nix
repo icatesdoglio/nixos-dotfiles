@@ -19,7 +19,6 @@ in
 
     home.file.".config/git" = {
       source = ../../config/git;
-      recursive = true;
       force = true;
     };
   };

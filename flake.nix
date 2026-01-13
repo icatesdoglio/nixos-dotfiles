@@ -1,42 +1,60 @@
 {
     description = "Ian's NixOS Configuration";
 
-##############################################################################
-# Inputs
-##############################################################################
+    /******
+     Inputs
+     ******/
 
     inputs = {
+
+        /* unstable for flakes */
         nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-# Raspberry Pi boot + firmware image builder
+        /* Raspberry Pi boot + firmware image builder */
         nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
-        neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
+        /* secrets */
+        sops-nix = {
+            url = "github:Mic92/sops-nix";
+            inputs.nixpkgs.follows = "nixpkgs";
+        };
 
+        /* home manager as nixos module */
         home-manager = {
             url = "github:nix-community/home-manager";
             inputs.nixpkgs.follows = "nixpkgs";
         };
 
+
+        /* old r version */
         r423 = {
             url = "github:NixOS/nixpkgs/nixos-23.05";
             flake = false;
         };
 
-        confdev.url = "path:/home/ian/confdev";
+        /* overlays */
+        neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
+
+        /* custom flakes */
+        confdev.url = "path:/home/ian/src/confdev";
+        suckless.url = "path:/home/ian/src/suckless";
+
     };
 
-##############################################################################
-# Outputs
-##############################################################################
+    /*******
+     Outputs
+     *******/
 
     outputs = inputs@{
+        self, 
             nixpkgs,
             nixos-raspberrypi,
-            neovim-nightly-overlay,
+            sops-nix,
             home-manager,
             r423,
+            neovim-nightly-overlay,
             confdev,
+            suckless,
             ...
     }:
     let
@@ -44,80 +62,85 @@
         (import neovim-nightly-overlay)
         ];
 
-    mkSystem = { system, 
-        hostPath, 
-        enableHM ? false, 
-        extraHMArgs ? {},
-        extraModules ? []
-    }:
-    let
-        legacy = import r423 {
-            system = system;
-        };
-    in
-        nixpkgs.lib.nixosSystem {
-            inherit system;
+        dotfiles = self;
 
-            specialArgs = {
-                inherit inputs legacy nixpkgs confdev;
-            } // extraHMArgs;
-
-            modules = [
-                ./users
-                    ./modules
-                    ./hosts/${hostPath}
-            { nixpkgs.overlays = overlays; }
-            ]
-                ++extraModules
-                ++ (if enableHM then [
-                        home-manager.nixosModules.home-manager
-                        {
-                        home-manager.useGlobalPkgs = true;
-                        home-manager.useUserPackages = true;
-                        home-manager.users.ian = {
-                        imports = [ ./home ./hosts/${hostPath}/home.nix ];
-                        _module.args = extraHMArgs // { inherit legacy; };
-                        };
-                        }
-                ] else []);
-        };
-    in
-    {
-############################################################################
-# Your systems
-############################################################################
-        nixosConfigurations = {
-
-##########################################################################
-# 1. MAIN DESKTOP
-##########################################################################
-            main-desktop = mkSystem {
-                system = "x86_64-linux";
-                hostPath = "main-desktop";
-                enableHM = true;
-                extraHMArgs = { confdev = confdev; };
+        mkSystem = { system, 
+            hostPath, 
+            enableHM ? false, 
+            extraHMArgs ? {},
+            extraModules ? []
+        }:
+        let
+            legacy = import r423 {
+                system = system;
             };
+        in
+            nixpkgs.lib.nixosSystem {
+                inherit system;
 
-##########################################################################
-# 2. RASPBERRY PI 5 — using nvmd image builder
-##########################################################################
-            raspberry-pi = nixos-raspberrypi.lib.nixosSystem {
-                system = "aarch64-linux";
-                specialArgs = inputs;
+                specialArgs = {
+                    inherit inputs legacy nixpkgs confdev suckless;
+                } // extraHMArgs;
+
 
                 modules = [
-                    ({ ... }: {
-                     imports = with nixos-raspberrypi.nixosModules; [
-                     raspberry-pi-5.base
-                     raspberry-pi-5.bluetooth
-                     ];
-                     })
+                    { nixpkgs.overlays = overlays; }
                     ./users
-                    ./modules
-                    ./modules/boot/raspberry-pi.nix
-                    ./hosts/raspberry-pi/default.nix
-                ];
+                        ./modules
+                        ./hosts/${hostPath}
+                        sops-nix.nixosModules.sops
+                ]
+                    ++extraModules
+                    ++ (if enableHM then [
+                            home-manager.nixosModules.home-manager
+                            {
+                            home-manager.useGlobalPkgs = true;
+                            home-manager.useUserPackages = true;
+                            home-manager.users.ian = {
+                            imports = [ ./home ./hosts/${hostPath}/home.nix ];
+                            _module.args = extraHMArgs // { inherit legacy; };
+                            };
+                            }
+                    ] else []);
+            };
+        in
+        {
+
+            /********
+              SYSTEMS
+             ********/
+            nixosConfigurations = {
+
+                /****************
+                  1. MAIN DESKTOP
+                 *****************/
+                gp-linux = mkSystem {
+                    system = "x86_64-linux";
+                    hostPath = "gp-linux";
+                    enableHM = true;
+                    extraHMArgs = { confdev = confdev; suckless = suckless; dotfiles = dotfiles; };
+                };
+                /*********************************************
+                  2. RASPBERRY PI 5 — using nvmd image builder
+                 **********************************************/
+                ServeMato = nixos-raspberrypi.lib.nixosSystem {
+                    system = "aarch64-linux";
+                    specialArgs = inputs;
+
+                    modules = [
+                        ({ ... }: {
+                         imports = with nixos-raspberrypi.nixosModules; [
+                         raspberry-pi-5.base
+                         raspberry-pi-5.bluetooth
+                         sops-nix.nixosModules.sops
+                         ];
+                         })
+                    ./users
+                        ./hosts/ServeMato
+                        ./modules
+                        ./modules/boot/raspberry-pi.nix
+                    ];
+                };
             };
         };
-    };
 }

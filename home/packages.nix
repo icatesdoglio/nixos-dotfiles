@@ -60,7 +60,7 @@ in
       #################################
       lib.optionals cfg.cli.enable (with pkgs; [
         ripgrep fd jq tree htop wget curl tmux
-        zoxide starship
+        zoxide starship sops
       ])
 
       #################################
@@ -97,14 +97,15 @@ in
         (pkgs.writeShellScriptBin "R42" ''
           exec ${legacy.rWrapper}/bin/R "$@"
         '')
-      ]
+      ];
 
-      #################################
+      /** #################################
       # Custom
       #################################
       ++ lib.optionals cfg.custom.enable [
         (confdev.packages.${pkgs.system}.default)
       ];
+      */
   };
 }
 

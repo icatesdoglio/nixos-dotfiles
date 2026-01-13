@@ -1,0 +1,181 @@
+{ pkgs, lib, config, ... }:
+
+{
+  imports = [
+    ./hardware-configuration.nix
+  ];
+
+  my.host = {
+    name = "ServeMato";
+    role = "server";
+    platform = "raspberry-pi";
+  };
+
+
+  hardware.raspberry-pi.extra-config = ''
+    [all]
+    initramfs initrd followkernel
+    dtparam=nvme
+    dtparam=pciex1_gen=3
+    pcie_probe=1
+  '';
+
+  /******
+    SOPS 
+   *****/
+  sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+
+  sops.secrets = {
+      "wg/surfshark/servemato" = {
+          sopsFile = ../../secrets/wireguard.yaml;
+          format = "yaml";
+          path = "/etc/wireguard/wg-surf.key";
+          owner = "root";
+          group = "root";
+          mode = "0400";
+      };
+      "wg/lan/servemato" = {
+          sopsFile = ../../secrets/wireguard.yaml;
+          format = "yaml";
+          path = "/etc/wireguard/wg0.key";
+          owner = "root";
+          group = "root";
+          mode = "0400";
+      };
+  };
+
+  environment.systemPackages = with pkgs; [ age sops ssh-to-age ];
+
+  users.users.root.openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBtghfDdBX+s+XnZbnP3kiV83dCVymSO4Zhv/SudP8pS"
+  ];
+
+  /**********************************
+    Edge Roll: VPN start & CloudFlare
+   **********************************/
+  my.roles.edge = {
+    enable = true;
+    vpnSubnet = "10.100.0.0/24";
+    listenPort = 51820;         
+    useCloudflaredDNS = false;  
+    interface = "wg0";          
+  };
+
+  /* Static Networking Setup */
+  my.networking.static = {
+    enable = true;
+    interface = "eth0";
+    address = "192.168.0.30";
+    gateway = "192.168.0.1";
+    nameservers = [ "127.0.0.1" ];
+  };
+
+  /**********************************
+    PiHole and DSN resolution
+   ***********************************/
+  my.networking.unbound.enable = true;
+  my.networking.pihole.enable = true;
+  networking.firewall.allowedUDPPorts = [ 51820 ];
+  networking.firewall.interfaces.wg0.allowedUDPPorts = [ 53 51820 ];
+  networking.firewall.interfaces.wg0.allowedTCPPorts = [ 53 ];
+
+  /*************
+    VPN Settings
+   *************/
+  my.wireguard = {
+      enable = true;
+
+      /* Local */
+      interfaces.wg0 = {
+          mode = "server";
+          interface = "wg0";
+          listenPort = 51820;
+          privateKeyFile = config.sops.secrets."wg/lan/servemato".path;
+          address = "10.100.0.1/24";
+
+          peers = {
+              desktop = {
+                  publicKey = "E3J+BJ2f+6VyLY8JB7ypzSOXdQsB66T/nr7mdcP4yxc=";
+                  allowedIPs = [ "10.100.0.2/32" ];
+                  persistentKeepalive = 25;
+              };
+
+              macmini = {
+                  publicKey = "GXxa4bsYmIeLdvnznaNiX8kzOwfjoRCJTMG3uUrFCXk=";
+                  allowedIPs = [ "10.100.0.3/32" ];
+                  persistentKeepalive = 25;
+              };
+
+              iphone = {
+                  publicKey = "hlZRXkdEdoHLpigkr3cP23X2qu89tf1Lj3hUbeMtGAw=";
+                  allowedIPs = [ "10.100.0.4/32" ];
+                  persistentKeepalive = 25;
+              };
+
+              archlaptop = {
+                  publicKey = "mx/c3oFZwTQ824bA4kXPyr+CU0qVLO28imgENyEZgUU=";
+                  allowedIPs = [ "10.100.0.5/32" ];
+                  persistentKeepalive = 25;
+              };
+          };
+      };
+
+      /* surfshark */
+      interfaces.wg-surf = {
+          mode = "client";
+          interface = "wg-surf";
+          address = "10.14.0.2/16";
+          privateKeyFile = config.sops.secrets."wg/surfshark/servemato".path;
+          peers = {
+              SEA =  { # Seattle
+                  publicKey = "SpMH/p90bg9ZAG6V2DWJQ9csWPVnKcDVppIp9Xul5G8=";
+                  endpoint = "us-sea.prod.surfshark.com:51820";
+                  allowedIPs = [ "0.0.0.0/0"];
+              };
+          };
+      };
+
+
+  };
+
+    ## Ensure Surfshark waits for DNS + network
+  systemd.services."wireguard-wg-surf".after = [
+    "network-online.target"
+    "nss-lookup.target"
+  ];
+  systemd.services."wireguard-wg-surf".wants = [
+    "network-online.target"
+  ];
+
+  systemd.services."wireguard-wg-surf-peer@".after = [
+    "network-online.target"
+    "nss-lookup.target"
+  ];
+  systemd.services."wireguard-wg-surf-peer@".wants = [
+    "network-online.target"
+  ];
+
+
+  zramSwap.enable = true;
+
+
+   /***********
+   Substituters 
+   ************/
+  nix.settings = {
+      substituters = [
+          "ssh-ng://ian@10.100.0.2"
+          "ssh-ng://ian@gp-linux" # Allow remote builds
+              "https://cache.nixos.org"
+      ];
+
+      trusted-public-keys = [
+          "desktop-cache:FhWK5ojANXSQA7s6/8bTZNHe59vo87rTCz8oD5aoIo8="
+      ];
+  };
+
+  services.openssh.enable = true;
+
+  system.stateVersion = "26.05";
+}
+

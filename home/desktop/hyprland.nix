@@ -16,19 +16,25 @@ in
 
   config = lib.mkIf cfg.enable {
     home.packages =
-      [ pkgs.foot pkgs.wofi pkgs.hyprpaper pkgs.cliphist pkgs.wl-clipboard pkgs.nushell ]
+        [ 
+        pkgs.foot 
+            pkgs.wofi 
+            pkgs.hyprpaper 
+            pkgs.cliphist 
+            pkgs.wl-clipboard 
+            pkgs.nushell
+            pkgs.pavucontrol
+        ]
       ++ lib.optional cfg.withWaybar pkgs.waybar;
 
     home.file = {
       ".config/hypr" = {
         source = ../../config/hypr;
-        recursive = true;
         force = true;
       };
     } // lib.optionalAttrs cfg.withWaybar {
       ".config/waybar" = {
         source = ../../config/waybar;
-        recursive = true;
         force = true;
       };
     };

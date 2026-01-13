@@ -4,5 +4,7 @@
         ./git.nix
         ./wezterm.nix
         ./ssh.nix
+        ./river.nix
+        ./confdev.nix
     ];
 }

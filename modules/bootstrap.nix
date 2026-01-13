@@ -26,8 +26,6 @@
      };
      })
 
-
-
     #### Server / Pi defaults
     (lib.mkIf (config.my.host.role == "server") {
      my.networking.networkmanager.enable = lib.mkDefault false;
@@ -39,7 +37,6 @@
      lib.mkAfter [ "docker" ];
      })
     ];
-
 
 }
 

@@ -2,7 +2,11 @@ local wezterm = require "wezterm"
 
 local config = wezterm.config_builder()
 
+config.default_prog = { "/usr/bin/env", "bash" , "-l" }
+
 config.color_scheme = "tokyonight"
+
+
 
 config.font = wezterm.font("Inconsolata Nerd Font Mono")
 
@@ -16,6 +20,43 @@ config.window_padding = {
     top = 0,
     bottom = 0,
 }
-config.default_prog = { "/etc/profiles/per-user/ian/bin/nu" }
+
+config.window_background_opacity = 0.8
+config.text_background_opacity = 0.8
+
+local function adjust_opacity(window, pane, delta)
+  local overrides = window:get_config_overrides() or {}
+  local opacity = overrides.window_background_opacity
+    or config.window_background_opacity
+    or 1.0
+
+  opacity = opacity + delta
+  if opacity < 0.1 then opacity = 0.1 end
+  if opacity > 1.0 then opacity = 1.0 end
+
+  overrides.window_background_opacity = opacity
+  overrides.text_background_opacity = opacity
+  window:set_config_overrides(overrides)
+end
+
+config.keys = {
+    {
+        key = "[",
+        mods = "ALT",
+        action = wezterm.action_callback(function(win, pane)
+            adjust_opacity(win, pane, -0.05)
+        end),
+    },
+    {
+        key = "]",
+        mods = "ALT",
+        action = wezterm.action_callback(function(win, pane)
+            adjust_opacity(win, pane, 0.05)
+        end),
+    },
+
+}
+
+
 
 return config
