@@ -25,7 +25,7 @@
 			peers = {
 				servemato = {
 					publicKey = "Cc+IKGfzGNfcS4/InZY89EBtPvXydjs4Ae5/AgBmq0Y=";
-					endpoint = "192.168.0.60:51820";
+					endpoint = "192.168.0.30:51820";
 					allowedIPs = [ "10.100.0.0/24" ];
 					persistentKeepalive = 25;
 				};
