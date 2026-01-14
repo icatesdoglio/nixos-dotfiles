@@ -127,9 +127,9 @@
       };
 
       /* surfshark */
-      interfaces.wg-surf = {
+      interfaces.wg-surf-us-sea = {
           mode = "client";
-          interface = "wg-surf";
+          interface = "wg-surf-us-sea";
           address = "10.14.0.2/16";
           privateKeyFile = config.sops.secrets."wg/surfshark/servemato".path;
           peers = {

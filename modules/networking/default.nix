@@ -1,7 +1,7 @@
 {
   imports = [
     ./ipv6.nix
-    ./wireguard_new.nix
+    ./wireguard.nix
     ./networkmanager.nix
     ./static-ip.nix
     ./pi-hole.nix

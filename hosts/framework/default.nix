@@ -57,7 +57,8 @@
 
     nixpkgs.config.allowUnfree = true;
 
-    hardware.pulseaudio.enable = false;
+    services.pulseaudio.enable = false;
+    hardware.bluetooth.enable = true;
 
     services.pipewire = {
         enable = true;

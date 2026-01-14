@@ -1,6 +1,7 @@
 keys:
   - &gp-linux age1x8sjxyrfdmafmshddtzg9pvf50cedpsgkxd38dvzzlh8rars5czq7wvfj0
   - &servemato age1hn0mkha60zhsny653zaljt3ksgrsfngu2ekfn2z5ke4mnc0chdrsd3098w
+  - &framework age10ye3fnfs7nsy7vwpy5rqnvjjk4vp3exxl5uufkp604hejvuu45dsgrkxgr
 
 creation_rules:
   - path_regex: secrets/[^/]+\.yaml$
@@ -8,4 +9,5 @@ creation_rules:
       - age:
           - *gp-linux
           - *servemato
+          - *framework
 
