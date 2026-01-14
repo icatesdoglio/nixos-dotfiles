@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, pkgs, ... }:
 
 {
 
@@ -39,6 +39,7 @@
 
 	my.services.ssh.enable = true;
 
+    networking.networkmanager.enable = true;
 	networking.networkmanager.ensureProfiles.profiles."lan-static" = {
 		connection = {
 			id = "lan-static";
@@ -54,7 +55,29 @@
 		};
 	};
 
+    nixpkgs.config.allowUnfree = true;
 
+    hardware.pulseaudio.enable = false;
+
+    services.pipewire = {
+        enable = true;
+        pulse.enable = true;
+        alsa.enable = true;
+        alsa.support32Bit = true;
+    };
+
+    hardware.enableAllFirmware = true;
+    hardware.firmware = [ pkgs.sof-firmware ];
+
+    environment.systemPackages = with pkgs; [
+        alsa-utils      
+            pulseaudio  
+            pavucontrol 
+    ];
+
+
+
+	services.xserver.videoDrivers = lib.mkForce [ "amdgpu" ];
 	my.desktop = {
 
 		enable = true;
