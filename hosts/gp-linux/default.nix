@@ -58,7 +58,7 @@
             };
         };
     };   
-    my.networking.ipv6.method = "auto";
+    my.networking.ipv6.method = "ignore";
 
     my.services.ssh.enable = true;
 
@@ -78,7 +78,7 @@
     };
 
     # networking.useHostResolvConf = false;
-    networking.nameservers = [ "10.100.0.1" ];
+    # networking.nameservers = [ "10.100.0.1" ];
 
     systemd.services."wireguard-wg-surf".after = [
         "network-online.target"

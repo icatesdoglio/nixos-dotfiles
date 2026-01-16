@@ -77,6 +77,7 @@
     gateway = "192.168.0.1";
     nameservers = [ "127.0.0.1" ];
   };
+  my.networking.ipv6.method = "ignore";
 
   /**********************************
     PiHole and DSN resolution
@@ -139,14 +140,15 @@
   /*** ensure domain in cloudflare has correct configuration" ***/
   services.cloudflare-dyndns = {
       enable = true;
-      package = pkgs.cloudflare-ddns;
       apiTokenFile = config.sops.secrets."cloudflare/api_key".path;
-      domains = [ "iancd.net" ];
+      domains = [ "home.iancd.net" ];
       ipv4 = true;
       ipv6 = false;
+      proxied = false;
   };
 
-  services.qbittorent = {
+  /**n
+  services.qbittorrent = {
       enable = true;
       openWebUI = true;
       dataDir = "/mnt/data/torrents";
@@ -155,13 +157,19 @@
       preStart = ''
           ip netns exec vpn iptables -P OUTPUT DROP
           ip netns exec vpn iptables -A OUTPUT -o ca-van -j ACCEPT
-      '';
+          '';
+      postStart = ''
+          ip netns exec vpn iptables -P INPUT DROP
+          ip netns exec vpn iptables -A INPUT -i ca-van -j ACCEPT
+          ip netns exec vpn iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+          '';
   };
 
-  systemd.services."ca-van".bindsTo = [ "network.target" ];
-  systemd.services."ca-van".after = [ "network.target" ];
-  systemd.services."ca-van".before = [ "qbittorrent.service" ];
-  systemd.services."ca-van".networkNamespace = "vpn";
+  systemd.services."wg-quick-ca-van".bindsTo = [ "network.target" ];
+  systemd.services."wg-quick-ca-van".after = [ "network.target" ];
+  systemd.services."wg-quick-ca-van".before = [ "qbittorrent.service" ];
+  systemd.services."wg-quick-ca-van".networkNamespace = "vpn";
+  **/
 
 
   zramSwap.enable = true;

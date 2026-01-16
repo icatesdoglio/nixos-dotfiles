@@ -11,6 +11,12 @@ in
     services.unbound = {
       enable = true;
       settings = {
+          forward-zone = [
+          {
+              name = ".";
+              forward-addr = ["1.1.1.1@53" "1.0.0.1@53"];
+          }
+          ];
         server = {
           interface = [ "127.0.0.1" "10.100.0.1" ];
           access-control = [
@@ -33,7 +39,6 @@ in
           msg-cache-size = "50m";
           rrset-cache-size = "100m";
 
-          forward-zone = [];
         };
       };
     };
