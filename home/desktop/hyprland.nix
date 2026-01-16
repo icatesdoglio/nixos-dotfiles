@@ -1,4 +1,4 @@
-{ lib, config, pkgs, ... }:
+{ lib, config, pkgs, bemenu, ... }:
 
 let
   cfg = config.my.hm.desktop.hyprland;
@@ -24,6 +24,7 @@ in
             pkgs.wl-clipboard 
             pkgs.nushell
             pkgs.pavucontrol
+            bemenu
         ]
       ++ lib.optional cfg.withWaybar pkgs.waybar;
 

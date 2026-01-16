@@ -16,9 +16,28 @@
         "type": "github"
       }
     },
+    "bemenu": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1756454762,
+        "narHash": "sha256-086dwnemI5jZgcZM6/yKG/oGK3v0FeebUDcCl80ewKs=",
+        "ref": "refs/heads/master",
+        "rev": "44b82f9f3fb9f04acfaa89471dddc05a20e16883",
+        "revCount": 618,
+        "type": "git",
+        "url": "ssh://git@github.com/icatesdoglio/bemenu"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/icatesdoglio/bemenu"
+      }
+    },
     "confdev": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs_2"
       },
       "locked": {
         "lastModified": 1768260629,
@@ -67,6 +86,24 @@
         "type": "github"
       }
     },
+    "flake-utils": {
+      "inputs": {
+        "systems": "systems"
+      },
+      "locked": {
+        "lastModified": 1705309234,
+        "narHash": "sha256-uNRRNRKmJyCRC/8y1RqBkqWBLM034y4qN7EprSdmgyA=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "1ef2e671c3b0c19053962c07dbda38332dcebf26",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -91,7 +128,7 @@
       "inputs": {
         "flake-parts": "flake-parts",
         "neovim-src": "neovim-src",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_3"
       },
       "locked": {
         "lastModified": 1768262756,
@@ -154,7 +191,7 @@
         "argononed": "argononed",
         "flake-compat": "flake-compat",
         "nixos-images": "nixos-images",
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": "nixpkgs_4"
       },
       "locked": {
         "lastModified": 1767357537,
@@ -173,6 +210,21 @@
     },
     "nixpkgs": {
       "locked": {
+        "lastModified": 1706847834,
+        "narHash": "sha256-h5oI1EYXFl9y6a9UplqposfGPL0hNGKH7bgT0mnLmQg=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "90f6c2d2b6132686cb6aa0f63fc0ce027d4e2c18",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
         "lastModified": 1768178648,
         "narHash": "sha256-kz/F6mhESPvU1diB7tOM3nLcBfQe7GU7GQCymRlTi/s=",
         "owner": "NixOS",
@@ -185,7 +237,7 @@
         "type": "indirect"
       }
     },
-    "nixpkgs_2": {
+    "nixpkgs_3": {
       "locked": {
         "lastModified": 1768178648,
         "narHash": "sha256-kz/F6mhESPvU1diB7tOM3nLcBfQe7GU7GQCymRlTi/s=",
@@ -201,7 +253,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_3": {
+    "nixpkgs_4": {
       "locked": {
         "lastModified": 1767323696,
         "narHash": "sha256-6preRiqOYkAVsZmCIaVqiyAwEpbtfVUC5HYfN6sJsrc=",
@@ -217,7 +269,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_4": {
+    "nixpkgs_5": {
       "locked": {
         "lastModified": 1768127708,
         "narHash": "sha256-1Sm77VfZh3mU0F5OqKABNLWxOuDeHIlcFjsXeeiPazs=",
@@ -233,7 +285,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_5": {
+    "nixpkgs_6": {
       "locked": {
         "lastModified": 1768127708,
         "narHash": "sha256-1Sm77VfZh3mU0F5OqKABNLWxOuDeHIlcFjsXeeiPazs=",
@@ -268,11 +320,12 @@
     },
     "root": {
       "inputs": {
+        "bemenu": "bemenu",
         "confdev": "confdev",
         "home-manager": "home-manager",
         "neovim-nightly-overlay": "neovim-nightly-overlay",
         "nixos-raspberrypi": "nixos-raspberrypi",
-        "nixpkgs": "nixpkgs_4",
+        "nixpkgs": "nixpkgs_5",
         "r423": "r423",
         "sops-nix": "sops-nix",
         "suckless": "suckless"
@@ -300,17 +353,37 @@
     },
     "suckless": {
       "inputs": {
-        "nixpkgs": "nixpkgs_5"
+        "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1768285372,
-        "narHash": "sha256-RdYN6HDwK7Ef9Rrhpu/aCV6SAZwC0xbQXPEPco7bEqs=",
-        "path": "/home/ian/src/suckless",
-        "type": "path"
+        "lastModified": 1768363346,
+        "narHash": "sha256-xnMdZOd8HbxToByton0pZo5Dz33xu3QM739PC/jfgzw=",
+        "ref": "refs/heads/main",
+        "rev": "182c2f136407b3c429c429bd3b7c1d7f37b77aca",
+        "revCount": 3,
+        "submodules": true,
+        "type": "git",
+        "url": "ssh://git@github.com/icatesdoglio/suckless"
       },
       "original": {
-        "path": "/home/ian/src/suckless",
-        "type": "path"
+        "submodules": true,
+        "type": "git",
+        "url": "ssh://git@github.com/icatesdoglio/suckless"
+      }
+    },
+    "systems": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
       }
     }
   },

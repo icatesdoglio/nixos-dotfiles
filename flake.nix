@@ -37,7 +37,11 @@
 
         /* custom flakes */
         confdev.url = "path:/home/ian/src/confdev";
-        suckless.url = "path:/home/ian/src/suckless";
+        suckless = {
+            url = "git+ssh://git@github.com/icatesdoglio/suckless?submodules=1";
+        };
+        bemenu.url = "git+ssh://git@github.com/icatesdoglio/bemenu";
+
 
     };
 
@@ -55,6 +59,7 @@
             neovim-nightly-overlay,
             confdev,
             suckless,
+            bemenu,
             ...
     }:
     let
@@ -136,6 +141,7 @@
                         confdev = confdev; 
                         suckless = suckless; 
                         dotfiles = dotfiles; 
+                        bemenu = bemenu;
                         };
                 };
 
