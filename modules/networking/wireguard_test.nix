@@ -4,6 +4,7 @@ let
 cfg = config.my.wireguard;
 in
 {
+
   options.my.wireguard = {
     enable = lib.mkEnableOption "Unified WireGuard module";
 
@@ -118,78 +119,118 @@ in
       description = "WireGuard interfaces keyed by name (wg0, wg-surf, etc.)";
     };
   };
-
   config = lib.mkIf cfg.enable (
-      let
+    let
+      # full list of interfaces
       ifaceList = lib.attrValues cfg.interfaces;
 
+      # split wg-quick vs native
+      wgQuick  = lib.filterAttrs (_: icfg: icfg.useWGQuick) cfg.interfaces;
+      wgKernel = lib.filterAttrs (_: icfg: !icfg.useWGQuick) cfg.interfaces;
+
+      # firewall ports
       firewallTCPPorts =
-      lib.concatMap (icfg: icfg.firewallTCPPorts) ifaceList;
+        lib.concatMap (icfg: icfg.firewallTCPPorts) ifaceList;
 
       firewallUDPPorts =
-      lib.concatMap (icfg:
-        icfg.firewallUDPPorts
-        ++ (if icfg.mode != "client" && icfg.listenPort != null
-          then [ icfg.listenPort ]
-          else [])
-        ) ifaceList;
+        lib.concatMap (icfg:
+          icfg.firewallUDPPorts
+          ++ (if icfg.mode != "client" && icfg.listenPort != null
+            then [ icfg.listenPort ]
+            else [])
+          ) ifaceList;
 
-      in
-      {
+    in
+    {
+
       /******************************
-        WireGuard interfaces
+        WireGuard interfaces (native)
        ******************************/
-        networking.wireguard.interfaces =
-          lib.mapAttrs (_name: icfg:
-              let
-              base = {
+      networking.wireguard.interfaces =
+        lib.mapAttrs (_name: icfg:
+          let
+            base = {
               privateKeyFile = icfg.privateKeyFile;
-              peers = lib.mapAttrsToList (pname: peerCfg:
-                  peerCfg // { name = pname; }
-                  ) icfg.peers;
-              };
+              peers = lib.mapAttrsToList (_pname: peerCfg: peerCfg) icfg.peers;
+            };
 
-              withIp =
+            withIp =
               if icfg.address != null then
-              base // { ips = [ icfg.address ]; }
-              else
-              base;
+                base // { ips = [ icfg.address ]; }
+              else base;
 
-
-              withPort =
+            withPort =
               if icfg.mode != "client" && icfg.listenPort != null then
-              withIp // { listenPort = icfg.listenPort; }
-              else
-              withIp;
+                withIp // { listenPort = icfg.listenPort; }
+              else withIp;
 
-              withMtu =
-                if icfg.mtu != null then
-                  withPort // { mtu = icfg.mtu; }
-                else
-                  withPort;
-
-              in
-                withMtu
-                ) cfg.interfaces;
+            withMtu =
+              if icfg.mtu != null then
+                withPort // { mtu = icfg.mtu; }
+              else withPort;
+          in
+            withMtu
+        ) wgKernel;
 
 
-              networking.firewall.allowedTCPPorts =
-                lib.mkAfter firewallTCPPorts;
+      /******************************
+        WireGuard interfaces (wg-quick)
+       ******************************/
+      networking.wg-quick.interfaces =
+        lib.mapAttrs (_name: icfg: {
+          # addresses come as list here
+          address = lib.mkIf (icfg.address != null) [ icfg.address ];
 
-              networking.firewall.allowedUDPPorts =
-                lib.mkAfter firewallUDPPorts;
+          privateKeyFile = icfg.privateKeyFile;
 
-              assertions = lib.mapAttrsToList (name: icfg: {
-                  assertion = !(icfg.mode != "client" && icfg.address == null);
-                  message =
-                  "WireGuard interface ${name} is in server/both mode but has no address";
-                  }) cfg.interfaces;
+          dns = lib.mkIf (icfg.dns != null) icfg.dns;
 
-              environment.systemPackages = [ pkgs.wireguard-tools ];
+          mtu = lib.mkIf (icfg.mtu != null) icfg.mtu;
 
-      }
+          peers = lib.mapAttrsToList (_pname: peerCfg: {
+            publicKey = peerCfg.publicKey;
+            allowedIPs = peerCfg.allowedIPs;
+            endpoint = peerCfg.endpoint;
+            persistentKeepalive = lib.mkIf (peerCfg.persistentKeepalive != null)
+              peerCfg.persistentKeepalive;
+          }) icfg.peers;
 
+          # NAT (full tunnel client)
+          postUp = lib.mkIf icfg.nat ''
+            iptables -t nat -A POSTROUTING -o ${icfg.interface} -j MASQUERADE
+          '';
+
+          postDown = lib.mkIf icfg.nat ''
+            iptables -t nat -D POSTROUTING -o ${icfg.interface} -j MASQUERADE
+          '';
+        }) wgQuick;
+
+
+      /******************************
+        Firewall Aggregation
+       ******************************/
+      networking.firewall.allowedTCPPorts =
+        lib.mkAfter firewallTCPPorts;
+
+      networking.firewall.allowedUDPPorts =
+        lib.mkAfter firewallUDPPorts;
+
+
+      /******************************
+        Sanity checks
+       ******************************/
+      assertions = lib.mapAttrsToList (name: icfg: {
+        assertion = !(icfg.mode != "client" && icfg.address == null);
+        message =
+          "WireGuard interface ${name} is in server/both mode but has no address";
+      }) cfg.interfaces;
+
+
+      /******************************
+        Tools
+       ******************************/
+      environment.systemPackages = [ pkgs.wireguard-tools ];
+    }
   );
-}
 
-# vim: ts=2 sts=2 sw=2 et
+}

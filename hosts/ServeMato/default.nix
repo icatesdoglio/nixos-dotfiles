@@ -32,12 +32,20 @@
           path = "/etc/wireguard/wg-surf.key";
           owner = "root";
           group = "root";
-          mode = "0400";
+          mode = "0440";
       };
       "wg/lan/servemato" = {
           sopsFile = ../../secrets/wireguard.yaml;
           format = "yaml";
           path = "/etc/wireguard/wg0.key";
+          owner = "root";
+          group = "root";
+          mode = "0400";
+      };
+      "cloudflare/api_key" = {
+          sopsFile = ../../secrets/cloudflare.yaml;
+          format = "yaml";
+          path = "/run/secrets/cloudflare-api-token";
           owner = "root";
           group = "root";
           mode = "0400";
@@ -126,41 +134,17 @@
           };
       };
 
-      /* surfshark */
-      interfaces.wg-surf-us-sea = {
-          mode = "client";
-          interface = "wg-surf-us-sea";
-          address = "10.14.0.2/16";
-          privateKeyFile = config.sops.secrets."wg/surfshark/servemato".path;
-          peers = {
-              SEA =  { # Seattle
-                  publicKey = "SpMH/p90bg9ZAG6V2DWJQ9csWPVnKcDVppIp9Xul5G8=";
-                  endpoint = "us-sea.prod.surfshark.com:51820";
-                  allowedIPs = [ "0.0.0.0/0"];
-              };
-          };
-      };
-
-
   };
 
-    ## Ensure Surfshark waits for DNS + network
-  systemd.services."wireguard-wg-surf".after = [
-    "network-online.target"
-    "nss-lookup.target"
-  ];
-  systemd.services."wireguard-wg-surf".wants = [
-    "network-online.target"
-  ];
-
-  systemd.services."wireguard-wg-surf-peer@".after = [
-    "network-online.target"
-    "nss-lookup.target"
-  ];
-  systemd.services."wireguard-wg-surf-peer@".wants = [
-    "network-online.target"
-  ];
-
+  /*** ensure domain in cloudflare has correct configuration" ***/
+services.cloudflare-dyndns = {
+  enable = true;
+  package = pkgs.cloudflare-ddns;
+  apiTokenFile = config.sops.secrets."cloudflare/api_key".path;
+  domains = [ "iancd.net" ];
+  ipv4 = true;
+  ipv6 = false;
+};
 
   zramSwap.enable = true;
 

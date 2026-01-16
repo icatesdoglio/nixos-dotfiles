@@ -118,18 +118,26 @@
                     system = "x86_64-linux";
                     hostPath = "gp-linux";
                     enableHM = true;
-                    extraHMArgs = { confdev = confdev; suckless = suckless; dotfiles = dotfiles; };
+                    extraHMArgs = { 
+                        confdev = confdev; 
+                        suckless = suckless; 
+                        dotfiles = dotfiles; 
+                        };
                 };
 
-		/******************************
-		  Framework Laptop
-		 ******************************/
-		framework = mkSystem {
-		system = "x86_64-linux";
-		hostPath = "framework";
-		enableHM = true;
-		extraHMArgs = { confdev = confdev; suckless = suckless; dotfiles = dotfiles; };
-		};
+                /******************************
+                  Framework Laptop
+                 ******************************/
+                framework = mkSystem {
+                    system = "x86_64-linux";
+                    hostPath = "framework";
+                    enableHM = true;
+                    extraHMArgs = { 
+                        confdev = confdev; 
+                        suckless = suckless; 
+                        dotfiles = dotfiles; 
+                        };
+                };
 
                 /*********************************************
                   3. RASPBERRY PI 5 — using nvmd image builder

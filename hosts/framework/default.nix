@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, config, sops-nix, ... }:
 
 {
 
@@ -13,72 +13,126 @@
 		platform = "x86_64";
 	};
 
+
+    /********
+      SOPS
+     ********/
+    sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+
+    sops.secrets = {
+        "wg/surfshark/framework" = {
+            sopsFile = ../../secrets/wireguard.yaml;
+            format = "yaml";
+            path = "/etc/wireguard/wg-surf.key";
+            owner = "root";
+            group = "root";
+            mode = "0400";
+        };
+        "wg/lan/framework" = {
+            sopsFile = ../../secrets/wireguard.yaml;
+            format = "yaml";
+            path = "/etc/wireguard/wg0.key";
+            owner = "root";
+            group = "root";
+            mode = "0400";
+        };
+    };
+
+
 	my.wireguard = {
-		enable = true;
-		interfaces.wg0 = {
-			mode = "client";
-			interface = "wg0";
-			privateKeyFile = "/etc/wireguard/wg0.key";
+        enable = true;
 
-			address = "10.100.0.6/32";
+        interfaces.wg0 = {
+            mode = "client";
+            interface = "wg0";
 
-			peers = {
-				servemato = {
-					publicKey = "Cc+IKGfzGNfcS4/InZY89EBtPvXydjs4Ae5/AgBmq0Y=";
-					endpoint = "192.168.0.30:51820";
-					allowedIPs = [ "10.100.0.0/24" ];
-					persistentKeepalive = 25;
-				};
-			};
+            privateKeyFile = config.sops.secrets."wg/lan/framework".path;
 
-		};
-	};   
+            address = "10.100.0.6/32";
 
-	my.networking.ipv6.method = "auto";
+            peers = {
+                servemato = {  # Servemato LAN hub
+                    publicKey = "Cc+IKGfzGNfcS4/InZY89EBtPvXydjs4Ae5/AgBmq0Y=";
+                    endpoint = "home.iancd.net:51820";
+                    allowedIPs = [ "10.100.0.0/24" ];
+                    persistentKeepalive = 25;
+                };
+            };
+        };
+    };
+ 
+
+    networking.firewall.package = pkgs.iptables;
+
+    my.networking.ipv6.method = "ignore";
+    networking.nat.enable = true;
+    networking.nat.externalInterface = "wlp191s0";
+
 
 
 	my.services.ssh.enable = true;
 
     networking.networkmanager.enable = true;
-	networking.networkmanager.ensureProfiles.profiles."lan-static" = {
-		connection = {
-			id = "lan-static";
-			type = "ethernet";
-			interface-name = "enp6s0";
-			autoconnect = true;
-		};
-		ipv4 = {
-			method = "manual";
-			addresses = "192.168.0.60/24";
-			gateway = "192.168.0.1";
-			dns = "10.100.0.1";
-		};
-	};
+    networking.firewall.checkReversePath = "loose";
+    networking.networkmanager.ensureProfiles.profiles."home-static" = {
+        connection = {
+            id = "home-static";
+            type = "wifi";
+                interface-name = "wlp191s0";
+                autoconnect = false;
+        };
 
-    nixpkgs.config.allowUnfree = true;
+        wifi = {
+            ssid = "Tomato Info";
+                mode = "infrastructure";
+        };
 
+        ipv4 = {
+            method = "manual";
+            addresses = "192.168.0.60/24";
+            gateway = null;
+            dns = "10.100.0.1,162.252.172.57,149.154.159.92";
+        };
+    };
+
+    networking.networkmanager.ensureProfiles.profiles."wifi-auto" = {
+        connection = {
+            id = "wifi-auto";
+            type = "wifi";
+            interface-name = "wlp191s0";
+            autoconnect = true;
+        };
+        ipv4.method = "auto";
+    };
+    networking.nameservers = [ "192.168.0.30" "162.252.172.57" "149.154.159.92" "1.1.1.1" ];
+
+
+    /**************
+      Laptop Config
+     **************/
     services.pulseaudio.enable = false;
-    hardware.bluetooth.enable = true;
-
+    nixpkgs.config.allowUnfree = true; # ALSA
     services.pipewire = {
         enable = true;
         pulse.enable = true;
         alsa.enable = true;
         alsa.support32Bit = true;
     };
-
-    hardware.enableAllFirmware = true;
-    hardware.firmware = [ pkgs.sof-firmware ];
-
     environment.systemPackages = with pkgs; [
         alsa-utils      
             pulseaudio  
             pavucontrol 
     ];
 
+    hardware.bluetooth.enable = true;
 
+    hardware.enableAllFirmware = true;
+    hardware.firmware = [ pkgs.sof-firmware ];
 
+    /* TODO: Bug in nvidia code somewhere gets auto enabled */
 	services.xserver.videoDrivers = lib.mkForce [ "amdgpu" ];
+
+    /* Desktop configurations */
 	my.desktop = {
 
 		enable = true;
