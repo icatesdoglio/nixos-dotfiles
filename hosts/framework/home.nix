@@ -9,7 +9,7 @@
     wezterm.enable = true;
     ssh.enable = true;
     river.enable = false;
-    confdev.enable = false;
+    confdev.enable = true;
   };
 
   my.games.minecraft.enable = false;
