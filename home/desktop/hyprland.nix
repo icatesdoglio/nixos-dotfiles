@@ -24,7 +24,8 @@ in
             pkgs.wl-clipboard 
             pkgs.nushell
             pkgs.pavucontrol
-            bemenu
+            pkgs.apple-cursor
+            bemenu.packages.${pkgs.system}.default
         ]
       ++ lib.optional cfg.withWaybar pkgs.waybar;
 
@@ -44,10 +45,10 @@ in
       NIX_OZONE_WL = "1";
       MOZ_ENABLE_WAYLAND = "1";
 
-      XCURSOR_THEME = "Bibata-Modern-Ice";
+      XCURSOR_THEME = "macOS";
       XCURSOR_SIZE = "24";
 
-      HYPRCURSOR_THEME = "Bibata-Modern-Ice";
+      HYPRCURSOR_THEME = "macOS";
       HYPRCURSOR_SIZE = "24";
     };
   };
