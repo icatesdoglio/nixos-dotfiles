@@ -36,7 +36,7 @@
         neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
 
         /* custom flakes */
-        confdev.url = "path:/home/ian/src/confdev";
+        confdev.url = "git+ssh://git@github.com/icatesdoglio/confdev";
         suckless = {
             url = "git+ssh://git@github.com/icatesdoglio/suckless?submodules=1";
         };
