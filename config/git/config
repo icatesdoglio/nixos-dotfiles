@@ -2,13 +2,10 @@
 	name = Ian Cates-Doglio
 	email = icates-doglio@teainc.org
 	username = icatesdoglio
-    signingkey = 281ADD9F197C1F3D
 [alias]
 	st = status -s
 	lol = log --graph --decorate --all --oneline
 	l = log --graph --decorate --all
-[commit]
-	gpgSign = true
 [init]
 	defaultBranch = main
 [core]
