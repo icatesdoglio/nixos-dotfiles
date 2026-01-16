@@ -137,14 +137,32 @@
   };
 
   /*** ensure domain in cloudflare has correct configuration" ***/
-services.cloudflare-dyndns = {
-  enable = true;
-  package = pkgs.cloudflare-ddns;
-  apiTokenFile = config.sops.secrets."cloudflare/api_key".path;
-  domains = [ "iancd.net" ];
-  ipv4 = true;
-  ipv6 = false;
-};
+  services.cloudflare-dyndns = {
+      enable = true;
+      package = pkgs.cloudflare-ddns;
+      apiTokenFile = config.sops.secrets."cloudflare/api_key".path;
+      domains = [ "iancd.net" ];
+      ipv4 = true;
+      ipv6 = false;
+  };
+
+  services.qbittorent = {
+      enable = true;
+      openWebUI = true;
+      dataDir = "/mnt/data/torrents";
+      user = "qbittorent";
+      networkNamespace = "vpn";
+      preStart = ''
+          ip netns exec vpn iptables -P OUTPUT DROP
+          ip netns exec vpn iptables -A OUTPUT -o ca-van -j ACCEPT
+      '';
+  };
+
+  systemd.services."ca-van".bindsTo = [ "network.target" ];
+  systemd.services."ca-van".after = [ "network.target" ];
+  systemd.services."ca-van".before = [ "qbittorrent.service" ];
+  systemd.services."ca-van".networkNamespace = "vpn";
+
 
   zramSwap.enable = true;
 
