@@ -1,11 +1,17 @@
 { config, lib, pkgs, ... }:
 
 {
-  users.groups.cloudflare-updater = {};
+    users.groups.qbit = {
+        gid = 991;
+    };
 
-  users.users.cloudflare-updater = {
-    isSystemUser = true;
-    group = "cloudflare-updater";
-  };
+    users.users.qbit = {
+        isSystemUser = true;
+        uid = 991;
+        group = "qbit";
+        home = "/srv/qbit";
+        createHome = true;
+    };
+
 }
 

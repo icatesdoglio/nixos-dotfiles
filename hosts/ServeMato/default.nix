@@ -147,29 +147,17 @@
       proxied = false;
   };
 
-  /**n
   services.qbittorrent = {
       enable = true;
       openWebUI = true;
       dataDir = "/mnt/data/torrents";
-      user = "qbittorent";
+      user = "qbit";
+      openWebUI = {
+          enable = true;
+          port = 8728;
+      };
       networkNamespace = "vpn";
-      preStart = ''
-          ip netns exec vpn iptables -P OUTPUT DROP
-          ip netns exec vpn iptables -A OUTPUT -o ca-van -j ACCEPT
-          '';
-      postStart = ''
-          ip netns exec vpn iptables -P INPUT DROP
-          ip netns exec vpn iptables -A INPUT -i ca-van -j ACCEPT
-          ip netns exec vpn iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-          '';
   };
-
-  systemd.services."wg-quick-ca-van".bindsTo = [ "network.target" ];
-  systemd.services."wg-quick-ca-van".after = [ "network.target" ];
-  systemd.services."wg-quick-ca-van".before = [ "qbittorrent.service" ];
-  systemd.services."wg-quick-ca-van".networkNamespace = "vpn";
-  **/
 
 
   zramSwap.enable = true;
