@@ -72,7 +72,12 @@
         mkSystem = { system, 
             hostPath, 
             enableHM ? false, 
-            extraHMArgs ? {},
+            extraHMArgs ? {
+                        confdev = confdev; 
+                        suckless = suckless; 
+                        dotfiles = dotfiles; 
+                        bemenu = bemenu;
+                },
             extraModules ? []
         }:
         let
@@ -123,11 +128,6 @@
                     system = "x86_64-linux";
                     hostPath = "gp-linux";
                     enableHM = true;
-                    extraHMArgs = { 
-                        confdev = confdev; 
-                        suckless = suckless; 
-                        dotfiles = dotfiles; 
-                        };
                 };
 
                 /******************************
@@ -137,12 +137,6 @@
                     system = "x86_64-linux";
                     hostPath = "framework";
                     enableHM = true;
-                    extraHMArgs = { 
-                        confdev = confdev; 
-                        suckless = suckless; 
-                        dotfiles = dotfiles; 
-                        bemenu = bemenu;
-                        };
                 };
 
                 /*********************************************
