@@ -195,6 +195,8 @@
 
       listenPort = 3000;
 
+      allowedHosts = "localhost,servemato,servemato.lan,10.100.0.1";
+
       settings = {
           title = "ServeMato";
           theme = "dark";

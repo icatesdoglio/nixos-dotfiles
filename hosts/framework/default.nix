@@ -13,6 +13,10 @@
 		platform = "x86_64";
 	};
 
+    my.system.binfmt = {
+        enable = true;
+        emulateAarch64 = true; # to cross compile the raspberry-pi
+    };
 
     /********
       SOPS

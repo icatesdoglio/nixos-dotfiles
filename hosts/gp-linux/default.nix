@@ -102,7 +102,7 @@
         emulateAarch64 = true; # to cross compile the raspberry-pi
     };
 
-# Desktop Environment
+    /** Desktop Environment **/
     my.hardware.nvidia.enable = true;
     my.desktop = {
 
