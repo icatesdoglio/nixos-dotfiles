@@ -1,7 +1,17 @@
 {
     "layer": "top",
-    "modules-left": ["hyprland/workspaces", "hyprland/window"],
-    "modules-right": ["battery", "cpu", "memory", "pulseaudio", "clock"],
+    "modules-left": [
+        "hyprland/workspaces", 
+        "hyprland/window"
+    ],
+    "modules-right": ["battery", "cpu", "custom/mem-cust", "pulseaudio", "clock"],
+
+    "battery": {
+        "format": "{icon} {capacity}%",
+        "format-icons": ["", "", "", "", ""],
+        "format-charging": " {capacity}%",
+        "format-plugged": " {capacity}%"
+    },
 
     "clock": {
         "format": " {:%H:%M}"
@@ -11,13 +21,17 @@
         "format": " {usage}%"
     },
 
-    "memory": {
-        "format": " {used}/{total}GiB"
+    "custom/mem-cust": {
+        "exec": "~/.config/waybar/scripts/custom-memory",
+        "interval": 10
     },
 
     "pulseaudio": {
         "format": "  {volume}%",
         "format-muted": "",
-        "on-click": "pavucontrol"
+        "on-click": "~/.config/waybar/scripts/window", 
+        "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +1%",
+        "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -1%",
+        "tooltip": false
     }
 }

@@ -110,24 +110,24 @@
     /**************
       Laptop Config
      **************/
-    services.pulseaudio.enable = false;
-    nixpkgs.config.allowUnfree = true; # ALSA
+    nixpkgs.config.allowUnfree = true;
+    /* Audio */
     services.pipewire = {
         enable = true;
         pulse.enable = true;
         alsa.enable = true;
         alsa.support32Bit = true;
     };
+    hardware.bluetooth.enable = true;
     environment.systemPackages = with pkgs; [
         alsa-utils      
             pulseaudio  
             pavucontrol 
     ];
-
-    hardware.bluetooth.enable = true;
-
     hardware.enableAllFirmware = true;
     hardware.firmware = [ pkgs.sof-firmware ];
+
+
 
     /* TODO: Bug in nvidia code somewhere gets auto enabled */
 	services.xserver.videoDrivers = lib.mkForce [ "amdgpu" ];
