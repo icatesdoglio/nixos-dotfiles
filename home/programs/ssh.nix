@@ -28,6 +28,13 @@ in
           identityFile = "~/.ssh/id_ed25519";
         };
 
+        gp-linux = {
+            hostname = "10.100.0.2";
+            user = "ian";
+            identityFile = "~/.ssh/id_ed25519";
+            proxyJump = "servemato";
+        };
+
         mini-mine = {
           hostname = "10.100.0.3";
           user = "ian_cd";

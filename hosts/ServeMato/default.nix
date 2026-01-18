@@ -290,7 +290,9 @@
   nix.settings = {
       substituters = [
           "ssh-ng://ian@10.100.0.2"
-          "ssh-ng://ian@gp-linux" # Allow remote builds
+          "ssh-ng://ian@gp-linux"
+          "ssh-ng://ian@10.100.0.6"
+          "ssh-ng://ian@framework"
               "https://cache.nixos.org"
       ];
 
