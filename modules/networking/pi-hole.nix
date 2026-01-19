@@ -2,9 +2,44 @@
 
 let
 cfg = config.my.networking.pihole;
+dnsReservationLines = lib.mapAttrsToList
+(name: ip: "address=/${name}/${ip}")
+cfg.dnsReservations;
+
+wildcardLines =
+map (domain: "address=/.${domain}/${cfg.hostIP}")
+cfg.wildcardDomains;
 in {
     options.my.networking.pihole = {
         enable = lib.mkEnableOption "Pi-hole";
+
+        localDomain = lib.mkOption {
+            type = lib.types.str;
+            default = "lan";
+            description = "Local DNS domain served by Pi-hole.";
+        };
+
+        hostIP = lib.mkOption {
+            type = lib.types.str;
+            example = "10.100.0.1";
+            description = "IP address Pi-hole should resolve local domains to.";
+        };
+
+        dnsReservations = lib.mkOption {
+            type = lib.types.attrsOf lib.types.str;
+            default = {};
+            description = "Static DNS records served by Pi-hole.";
+        };
+
+        wildcardDomains = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [];
+            example = [ "servemato.lan" ];
+            description = ''
+                Domains that should resolve all subdomains to this host.
+                Requires dnsmasq wildcard rules.
+                '';
+        };
     };
 
     config = lib.mkIf cfg.enable {
@@ -50,9 +85,10 @@ in {
                     "expand-hosts"
                         "domain-needed"
                         "bogus-priv"
-                        "domain=lan"
-                        "address=/pi.hole/10.100.0.1"
-                ];
+                        "domain=${cfg.localDomain}"
+                ]
+                ++ dnsReservationLines
+                ++ wildcardLines;
             };
         };
 

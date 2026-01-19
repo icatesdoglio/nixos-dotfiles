@@ -50,6 +50,44 @@ in
               description = "Optional MTU override for this WireGuard interface";
             };
 
+            table = lib.mkOption {
+              type =  lib.types.str;
+              default = "main";
+              description = ''
+                Routing table WireGuard installs routes into when allowedIPsAsRoutes is enabled.
+                Use "main", a numeric table ID, or "off" to disable route installation.
+                '';
+            };
+
+            allowedIPsAsRoutes = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = ''
+                Whether AllowedIPs should be automatically installed as kernel routes.
+                Disable this when using policy routing or custom ip rules.
+                '';
+            };
+
+            preSetup = lib.mkOption {
+              type = lib.types.str;
+              default = ""; 
+            };
+
+            postSetup = lib.mkOption {
+              type = lib.types.str;
+              default = ""; 
+            };
+
+            preShutdown = lib.mkOption {
+              type = lib.types.str;
+              default = ""; 
+            };
+
+            postShutdown = lib.mkOption {
+              type = lib.types.str;
+              default = ""; 
+            };
+
             peers = lib.mkOption {
               type = lib.types.attrsOf (lib.types.submodule {
                   options = {
@@ -92,12 +130,6 @@ in
               type = lib.types.listOf lib.types.port;
               default = [];
               description = "Extra UDP ports to open on the firewall";
-            };
-
-            useWGQuick = lib.mkOption {
-              type = lib.types.bool;
-              default = false;
-              description = "Use wg-quick instead of native WireGuard module.";
             };
 
             dns = lib.mkOption {
@@ -144,16 +176,27 @@ in
               let
               base = {
               privateKeyFile = icfg.privateKeyFile;
+
               peers = lib.mapAttrsToList (pname: peerCfg:
                   peerCfg // { name = pname; }
                   ) icfg.peers;
+
+              table = icfg.table;
+              allowedIPsAsRoutes = icfg.allowedIPsAsRoutes;
+
+              preSetup = icfg.preSetup;
+              postSetup = icfg.postSetup;
+              preShutdown = icfg.preShutdown;
+              postShutdown = icfg.postShutdown;
+
+              socketNamespace = icfg.socketNamespace or null;
               };
 
-              withIp =
-              if icfg.address != null then
-              base // { ips = [ icfg.address ]; }
-              else
-              base;
+        withIp =
+          if icfg.address != null then
+            base // { ips = [ icfg.address ]; }
+          else
+            base;
 
 
               withPort =
@@ -161,6 +204,7 @@ in
               withIp // { listenPort = icfg.listenPort; }
               else
               withIp;
+
 
               withMtu =
                 if icfg.mtu != null then
