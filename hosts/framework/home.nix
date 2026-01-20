@@ -12,7 +12,10 @@
     confdev.enable = true;
   };
 
-  my.games.minecraft.enable = false;
+  my.games = {
+      minecraft.enable = false;
+  };
+
 
   my.hm.packages = {
     enable = true;

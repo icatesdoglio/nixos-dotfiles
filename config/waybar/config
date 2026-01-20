@@ -4,7 +4,13 @@
         "hyprland/workspaces", 
         "hyprland/window"
     ],
-    "modules-right": ["battery", "cpu", "custom/mem-cust", "pulseaudio", "clock"],
+    "modules-right": ["custom/network", "battery", "cpu", "custom/mem-cust", "pulseaudio", "clock"],
+
+    "custom/network": {
+        "exec": "~/.config/waybar/scripts/network",
+        "interval": 3,
+        "return-type": "json"
+    },
 
     "battery": {
         "format": "{icon} {capacity}%",
@@ -23,7 +29,7 @@
 
     "custom/mem-cust": {
         "exec": "~/.config/waybar/scripts/custom-memory",
-        "interval": 10
+        "interval": 3
     },
 
     "pulseaudio": {

@@ -16,6 +16,7 @@ window#waybar {
 #clock,
 #cpu,
 #custom-mem-cust,
+#custom-network
 #pulseaudio {
   padding: 0px 8px;
   margin: 0px 6px;
@@ -39,4 +40,18 @@ window#waybar {
   color: #f7768e;
 }
 
+/* No VPN egress (WiFi / LAN) */
+#custom-network.no-vpn {
+  color: rgb(183, 134, 27); /* orange */
+}
+
+/* Home WireGuard is default route */
+#custom-network.vpn-home {
+  color: #7aa2f7; /* blue */
+}
+
+/* Surfshark / external VPN is default route */
+#custom-network.vpn-egress {
+  color: #9ece6a; /* green */
+}
 

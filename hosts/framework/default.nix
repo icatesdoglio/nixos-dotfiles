@@ -48,7 +48,6 @@
 
         interfaces.wg0 = {
             mode = "client";
-            interface = "wg0";
 
             privateKeyFile = config.sops.secrets."wg/lan/framework".path;
 
@@ -149,5 +148,12 @@
 		useDisplayManager = false;
 	};
 
-	system.stateVersion = "26.05";
+    programs.steam = {
+        enable = true;
+        extraCompatPackages = with pkgs; [
+            proton-ge-bin
+        ];
+    };
+
+    system.stateVersion = "26.05";
 }

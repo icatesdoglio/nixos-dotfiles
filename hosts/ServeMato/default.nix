@@ -42,6 +42,14 @@
             group = "root";
             mode = "0400";
         };
+        "wg/vps/servemato" = {
+            sopsFile = ../../secrets/wireguard.yaml;
+            format = "yaml";
+            path = "/etc/wireguard/wg-vps.key";
+            owner = "root";  
+            group = "root";
+            mode = "0400";
+        };
         "cloudflare/api_key" = {
             sopsFile = ../../secrets/cloudflare.yaml;
             format = "yaml";
@@ -52,7 +60,7 @@
         };
     };
 
-    environment.systemPackages = with pkgs; [ age sops ssh-to-age iproute2 ];
+    environment.systemPackages = with pkgs; [ age sops ssh-to-age iproute2 nftables ];
 
     users.users.root.openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBtghfDdBX+s+XnZbnP3kiV83dCVymSO4Zhv/SudP8pS"
@@ -128,18 +136,21 @@
         wildcardDomains = [ "servemato.lan" ];
 
     };
-    networking.firewall.allowedUDPPorts = [ 
+    networking.firewall.interfaces.eth0.allowedUDPPorts = [ 
         51820 # Wireguard
     ];
     networking.firewall.interfaces.wg0.allowedUDPPorts = [ 
         53      # DNS
         51820   # Wireguard
         51821   # Torrent port (UDP, DHT)
+        51822   # Wireguard -- VPS
     ];
     networking.firewall.interfaces.wg0.allowedTCPPorts = [ 
+        22      # SSH
         53      # DNS
         3000    # Home Page
         8081    # Web UI
+        9696    # Prowlarr UI
         51821   # Torrent port (TCP)
     ];
     networking.firewall.interfaces."ca-van".allowedUDPPorts = [ 
@@ -166,31 +177,25 @@
               desktop = {
                   publicKey = "E3J+BJ2f+6VyLY8JB7ypzSOXdQsB66T/nr7mdcP4yxc=";
                   allowedIPs = [ "10.100.0.2/32" ];
-                  persistentKeepalive = 25;
               };
 
               macmini = {
                   publicKey = "GXxa4bsYmIeLdvnznaNiX8kzOwfjoRCJTMG3uUrFCXk=";
                   allowedIPs = [ "10.100.0.3/32" ];
-                  persistentKeepalive = 25;
               };
 
               iphone = {
                   publicKey = "hlZRXkdEdoHLpigkr3cP23X2qu89tf1Lj3hUbeMtGAw=";
                   allowedIPs = [ "10.100.0.4/32" ];
-                  persistentKeepalive = 25;
               };
 
               archlaptop = {
                   publicKey = "mx/c3oFZwTQ824bA4kXPyr+CU0qVLO28imgENyEZgUU=";
                   allowedIPs = [ "10.100.0.5/32" ];
-                  persistentKeepalive = 25;
               };
               framework = {
                   publicKey = "8A7L4okGuJSPtHIHxVNcTT18iGKr50Ipz18G9LAQKgE=";
                   allowedIPs = [ "10.100.0.6/32" ];
-                  persistentKeepalive = 25;
-
               };
           };
           postSetup = ''
@@ -210,6 +215,19 @@
               '';
 
         };
+        interfaces.wg-vps = {
+            mode = "client"; 
+            address = "10.200.0.2/32";
+            privateKeyFile = config.sops.secrets."wg/vps/servemato".path;
+            peers = {
+                no-snow = {
+                    publicKey = "eN2zkAgSZJc4/sKnsWvGrFTVbDPUjn858lwSVPn2MGg=";
+                    allowedIPs = [ "10.200.0.1/32" ];
+                    endpoint = "192.210.142.96:51820";
+                    persistentKeepalive = 25;
+                };
+            };
+        };
         interfaces.ca-van = {
             mode = "client";
             table = "off"; 
@@ -224,11 +242,6 @@
                     persistentKeepalive = 25;
                 };
             };
-
-            preSetup = ''
-                ${pkgs.iproute2}/bin/ip route add blackhole 0.0.0.0/0 table 200 || true
-                ${pkgs.iproute2}/bin/ip route del blackhole 0.0.0.0/0 table 200 || true
-                '';
 
             postSetup = let
                 uid = toString config.users.users.qbit.uid;
@@ -267,6 +280,7 @@
         "net.ipv4.conf.all.rp_filter" = 0;
         "net.ipv4.conf.default.rp_filter" = 0;
         "net.ipv4.conf.ca-van.rp_filter" = 0;
+        "net.ipv4.conf.wg0.rp_filter" = 0;
         "net.ipv4.conf.eth0.rp_filter" = 0;
     };
 
@@ -277,6 +291,16 @@
     networking.firewall.extraStopCommands = ''
         iptables -t nat -D POSTROUTING -o ca-van -j MASQUERADE || true
         '';
+    /* Tighten ca-van against spoofing */ 
+    /*
+    networking.firewall.extraRules = ''
+        iifname "wg0" ip saddr != 10.100.0.0/24 drop 
+
+        iifname "ca-van" ip saddr 10.0.0.0/8 drop
+        iifname "ca-van" ip saddr 172.16.0.0/12 drop
+        iifname "ca-van" ip saddr 192.168.0.0/16 drop
+        '';
+        */
 
     /* TODO:
        the this wireguard setup requires DNS 
@@ -331,7 +355,7 @@
         webuiPort = 8081;
         torrentingPort = 51821;
 
-        openFirewall = true; # more restrictive setup
+        openFirewall = false; # more restrictive setup
 
             serverConfig = {
                 /* download paths */
@@ -348,12 +372,18 @@
                 /* security / sanity */
                 Preferences.WebUI.LocalHostAuth = false;
                 Preferences.WebUI.AuthSubnetWhitelistEnabled = true;
-                Preferences.WebUI.AuthSubnetWhitelist = "192.168.0.1/24,10.100.0.0/24";
+                Preferences.WebUI.AuthSubnetWhitelist = "192.168.0.0/24,10.100.0.0/24";
 
                 /* optional: don’t expose upnp */
                 Preferences.Connection.UPnP = false;
                 LegalNotice.Accepted = true;
             };
+    };
+
+    services.prowlarr = {
+        enable = true;
+        openFirewall = false;
+        settings.server.port = 9696;
     };
 
     zramSwap.enable = true;
@@ -376,7 +406,14 @@
         ];
     };
 
-    services.openssh.enable = true;
+    services.openssh = {
+        enable = true;
+        openFirewall = false;
+        listenAddresses = [
+        { addr = "10.100.0.1"; port = 22; }
+        { addr = "192.168.0.30"; port = 22; }
+        ];
+    };
 
     system.stateVersion = "26.05";
 }
