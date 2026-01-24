@@ -94,21 +94,22 @@ end)
 
 
 -- LSP CONFIGURATION
-vim.lsp.enable("lua_ls")
 vim.lsp.config("lua_ls", {
+  cmd = { "lua-language-server" },
+  filetypes = { "lua" },
+  root_dir = vim.fn.getcwd(),
   settings = {
     Lua = {
       runtime = { version = "LuaJIT" },
-      diagnostics = {
-        globals = { "vim" },
-      },
+      diagnostics = { globals = { "vim" } },
       workspace = {
-          library = vim.api.nvim_get_runtime_file("", true),
-          checkThirdParty = false,
-      }
+        library = vim.api.nvim_get_runtime_file("", true),
+        checkThirdParty = false,
+      },
     },
   },
 })
+vim.lsp.enable("lua_ls")
 
 vim.lsp.enable("pyright")
 vim.lsp.enable("rust_analyzer")
@@ -116,17 +117,20 @@ vim.lsp.enable("rust_analyzer")
 --     settings = {}
 -- })
 --
-vim.lsp.enable("nixd")
 vim.lsp.config("nixd", {
-    settings = {
-        nixpkgs = {
-            expr = "import <nixpkgs> {}",
-        },
-        formatting = {
-            command = { "alejandra" },
-        },
+  cmd = { "nixd" },
+  filetypes = { "nix" },
+  root_dir = vim.fn.getcwd(),
+  settings = {
+    nixpkgs = {
+      expr = "import <nixpkgs> {}",
     },
+    formatting = {
+      command = { "alejandra" },
+    },
+  },
 })
+vim.lsp.enable("nixd")
 
 local blink = require("blink.cmp")
 
@@ -143,6 +147,7 @@ blink.setup({
     fuzzy = { implementation = "prefer_rust_with_warning" }
 
 })
+
 
 
 

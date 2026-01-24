@@ -1,4 +1,4 @@
-{ lib, pkgs, config, sops-nix, ... }:
+{ lib, pkgs, config, ... }:
 
 {
 
@@ -51,6 +51,7 @@
 
             privateKeyFile = config.sops.secrets."wg/lan/framework".path;
 
+            mtu = 1280;
             address = "10.100.0.6/32";
 
             peers = {
@@ -61,11 +62,40 @@
                     persistentKeepalive = 25;
                 };
             };
+
         };
     };
- 
 
-    networking.firewall.package = pkgs.iptables;
+    networking.wg-quick.interfaces.ca-van = {
+        address = [ "10.14.0.2/16" ];
+        autostart = false;
+
+        privateKeyFile = config.sops.secrets."wg/surfshark/framework".path;
+
+        table = "51820";
+
+        dns = [ "162.252.172.57" "149.154.159.92" ];
+
+        extraOptions = {
+            fwmark = 51820;
+        };
+
+        peers = [{
+            publicKey = "o4HezxSsbNqJFJZj+VBw/QXFLpfNo7PZu8xe7H2hTw0=";
+            allowedIPs = [ "0.0.0.0/0" ];
+            endpoint = "ca-van.prod.surfshark.com:51820";
+            persistentKeepalive = 25;
+        }];
+        postUp = ''
+            ip rule add not fwmark 51820 lookup 51820
+            ip rule add lookup main suppress_prefixlength 0
+            '';
+
+        postDown = ''
+            ip rule del not fwmark 51820 lookup 51820 || true
+            ip rule del lookup main suppress_prefixlength 0 || true
+            '';
+    };
 
     my.networking.ipv6.method = "ignore";
     networking.nat.enable = true;
@@ -81,21 +111,24 @@
         connection = {
             id = "home-static";
             type = "wifi";
-                interface-name = "wlp191s0";
-                autoconnect = false;
+            interface-name = "wlp191s0";
+            autoconnect = false;
+            autoconnect-priority = 50;
         };
 
         wifi = {
             ssid = "Tomato Info";
-                mode = "infrastructure";
+            mode = "infrastructure";
         };
 
         ipv4 = {
             method = "manual";
             addresses = "192.168.0.60/24";
-            gateway = null;
-            dns = "10.100.0.1,162.252.172.57,149.154.159.92";
+            gateway = "192.168.0.1";
+            dns = "10.100.0.1";
+            # ignore-auto-dns = true;
         };
+        ipv6.method = "ignore";
     };
 
     networking.networkmanager.ensureProfiles.profiles."wifi-auto" = {
@@ -106,9 +139,10 @@
             autoconnect = true;
         };
         ipv4.method = "auto";
+        ipv6.method = "ignore";
     };
-    networking.nameservers = [ "192.168.0.30" "162.252.172.57" "149.154.159.92" "1.1.1.1" ];
 
+    services.resolved.enable = false;
 
     /**************
       Laptop Config
@@ -126,6 +160,8 @@
         alsa-utils      
             pulseaudio  
             pavucontrol 
+            dig
+            jellyfin-desktop
     ];
     hardware.enableAllFirmware = true;
     hardware.firmware = [ pkgs.sof-firmware ];
@@ -142,11 +178,16 @@
 
 		hyprland.enable = true;
 		dwm.enable = true;
-		river.enable = false;
+		river.enable = true;
 		plasma.enable = false;
 
 		useDisplayManager = false;
 	};
+
+    users.groups.games = {
+        gid = 993;
+    };
+    users.users.ian.extraGroups = lib.mkAfter [ "games" ];
 
     programs.steam = {
         enable = true;

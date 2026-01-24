@@ -103,15 +103,6 @@
         createHome = true;
     };
 
-    users.users.media = {
-        isSystemUser = true;
-        uid = 992;
-        group = "media";
-        home = "/srv/media";
-        createHome = true;
-    };
-
-
     /**********************************
       Pi-Hole and DNS resolution
      ***********************************/
@@ -150,7 +141,9 @@
         53      # DNS
         3000    # Home Page
         8081    # Web UI
-        9696    # Prowlarr UI
+        9696    # prowlarr
+        9697    # radarr
+        9698    # sonarr
         51821   # Torrent port (TCP)
     ];
     networking.firewall.interfaces."ca-van".allowedUDPPorts = [ 
@@ -333,18 +326,52 @@
         enable = true;
 
         listenPort = 3000;
-
         allowedHosts = "10.100.0.1:3000";
 
         settings = {
-            title = "servemato";
+            title = "ServeMato";
             theme = "dark";
             color = "slate";
         };
+
+        services = {
+            Media = [
+            {
+                Radarr = {
+                    href = "http://10.100.0.1:9697";
+                    description = "Movies";
+                };
+            }
+            {
+                Sonarr = {
+                    href = "http://10.100.0.1:9698";
+                    description = "TV Shows";
+                };
+            }
+            {
+                Prowlarr = {
+                    href = "http://10.100.0.1:9696";
+                    description = "Indexers";
+                };
+            }
+            {
+                qBittorrent = {
+                    href = "http://10.100.0.1:8081";
+                    description = "Downloads";
+                };
+            }
+            ];
+
+            Infrastructure = [
+            {
+                Pi-hole = {
+                    href = "http://10.100.0.1:8080";
+                    description = "DNS";
+                };
+            }
+            ];
+        };
     };
-
-
-
 
     services.qbittorrent = {
         enable = true;
@@ -382,9 +409,70 @@
 
     services.prowlarr = {
         enable = true;
+        dataDir = "/srv/prowlarr";
+
         openFirewall = false;
-        settings.server.port = 9696;
+        settings = {
+            log.analyticsEnabled = false;
+            server.port = 9696;
+            update = {
+                automatically = false;
+                mechanism = "external";
+            };
+        };
     };
+    services.radarr = {
+        enable = true;
+        dataDir = "/srv/radarr";
+
+        openFirewall = false;
+        settings = {
+            log.analyticsEnabled = false;
+            server.port = 9697;
+            update = {
+                automatically = false;
+                mechanism = "external";
+            };
+        };
+    };
+    services.sonarr = {
+        enable = true;
+        dataDir = "/srv/sonarr";
+        user = "sonarr";
+        group = "media";
+
+        openFirewall = false;
+        settings = {
+            log.analyticsEnabled = false;
+            server.port = 9698;
+            update = {
+                automatically = false;
+                mechanism = "external";
+            };
+        };
+    };
+    services.jellyfin = {
+        enable = true;
+        openFirewall = true;
+
+        user = "jellyfin";
+        group = "media";
+        dataDir = "/srv/jellyfin/data";
+        configDir = "/srv/jellyfin/config";
+    };
+
+    systemd.services.plex.environment = {
+        PLEX_MEDIA_SERVER_PORT = "9699";
+    };
+
+
+    systemd.tmpfiles.rules = [
+        "d /srv 0770 root media -"
+            "d /srv/radarr 0770 radarr media -"
+            "d /srv/sonarr 0770 sonarr media -"
+            "d /srv/plex 0770 sonarr media -"
+    ];
+
 
     zramSwap.enable = true;
 

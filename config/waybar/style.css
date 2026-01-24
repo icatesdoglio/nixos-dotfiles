@@ -11,23 +11,33 @@ window#waybar {
   padding: 4px 6px;
 }
 
-#workspaces button,
+#window {
+  margin-left: 15px;
+}
+
 #battery,
 #clock,
 #cpu,
 #custom-mem-cust,
-#custom-network
+#custom-network,
 #pulseaudio {
   padding: 0px 8px;
-  margin: 0px 6px;
-  background: rgba(255, 255, 255, 0.05);
+  margin: 0px 2px;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 1px;
 }
+
+#workspaces button {
+  padding: 0px 1px;
+  margin: 0px 1px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1px;
+}
+
 
 #workspaces button.active {
   box-shadow: inset 0 -4px rgb(183, 134, 27);
 }
-
 #battery.charging {
   color: #9ece6a;
 }
@@ -40,18 +50,15 @@ window#waybar {
   color: #f7768e;
 }
 
-/* No VPN egress (WiFi / LAN) */
 #custom-network.no-vpn {
-  color: rgb(183, 134, 27); /* orange */
+  color: rgb(183, 134, 27);
 }
 
-/* Home WireGuard is default route */
 #custom-network.vpn-home {
-  color: #7aa2f7; /* blue */
+  color: #566b84;
 }
 
-/* Surfshark / external VPN is default route */
 #custom-network.vpn-egress {
-  color: #9ece6a; /* green */
+  color: #9ece6a;
 }
 

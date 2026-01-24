@@ -1,7 +1,8 @@
-# -----------------------
-# Tags (dwm-style 1–9)
-# -----------------------
+#!/usr/bin/env sh
 
+MOD=Mod1
+
+# Tags (dwm-style 1–9)
 for i in $(seq 1 9); do
   tag=$((1 << (i - 1)))
 
@@ -11,4 +12,10 @@ for i in $(seq 1 9); do
   # Move focused window to tag
   riverctl map normal $MOD Shift $i set-view-tags $tag
 done
+
+riverctl map normal $MOD Return spawn wezterm
+
+riverctl map normal $MOD P spawn /home/ian/.config/river/scripts/bemenu-custom-run
+
+riverctl map normal $MOD Shift BackSpace exit
 

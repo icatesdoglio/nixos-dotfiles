@@ -36,7 +36,20 @@ for iface in "$wg_home" "$wg_surf"; do
 done
 
 # ---------- Default route ----------
-default_dev=$(ip route show default 2>/dev/null | awk '{print $5}')
+#
+egress_dev="$(ip route get 1.1.1.1 2>/dev/null \
+  | sed -n 's/.* dev \([^ ]*\).*/\1/p')"
+
+home_dev="$(ip route get 10.100.0.1 2>/dev/null \
+  | sed -n 's/.* dev \([^ ]*\).*/\1/p')"
+
+if [[ "$egress_dev" == "$wg_surf" ]]; then
+  class="vpn-egress"
+elif [[ "$home_dev" == "$wg_home" ]]; then
+  class="vpn-home"
+else
+  class="no-vpn"
+fi
 
 # ---------- Build output ----------
 text=""
@@ -67,11 +80,13 @@ fi
 tooltip+="Default route: ${default_dev:-unknown}"
 
 # ---------- Class ----------
-case "$default_dev" in
-  "$wg_surf") class="vpn-egress" ;;
-  "$wg_home") class="vpn-home" ;;
-  *)          class="no-vpn" ;;
-esac
+if [[ "$egress_dev" == "$wg_surf" ]]; then
+  class="vpn-egress"
+elif [[ "$home_dev" == "$wg_home" ]]; then
+  class="vpn-home"
+else
+  class="no-vpn"
+fi
 
 # ---------- Emit JSON (ALWAYS) ----------
 printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \

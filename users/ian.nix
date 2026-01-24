@@ -1,5 +1,7 @@
 {
-  users.users.ian = {
+
+
+    users.users.ian = {
     isNormalUser = true;
     group = "ian";
     extraGroups = [ "wheel" "networkmanager" "vpnctl" ];

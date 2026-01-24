@@ -10,11 +10,14 @@ in
   config = lib.mkIf cfg.enable {
 
     # User-space tools River configs typically rely on
-    home.packages = with pkgs; [
-      wl-clipboard
-      mako
-      swaybg
-    ];
+      home.packages = with pkgs; [
+              wl-clipboard
+              mako
+              swaybg
+              brightnessctl
+              grim
+              slurp
+      ];
 
     # Own the River config directory, just like nvim
     home.file.".config/river" = {
