@@ -160,6 +160,7 @@
         alsa-utils      
             pulseaudio  
             pavucontrol 
+            spotify
             dig
             jellyfin-desktop
     ];
@@ -195,6 +196,9 @@
             proton-ge-bin
         ];
     };
+    
+
+    
 
     system.stateVersion = "26.05";
 }

@@ -1,6 +1,17 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 MOD=Mod1
+
+# Tiling
+riverctl default-layout rivertile
+
+riverctl spawn "rivertile \
+  -view-padding 3 \
+  -outer-padding 4 \
+  -main-location left \
+  -main-count 1 \
+  -main-ratio 0.5"
+riverctl output-layout rivertile
 
 # Tags (dwm-style 1–9)
 for i in $(seq 1 9); do
@@ -17,5 +28,26 @@ riverctl map normal $MOD Return spawn wezterm
 
 riverctl map normal $MOD P spawn /home/ian/.config/river/scripts/bemenu-custom-run
 
-riverctl map normal $MOD Shift BackSpace exit
+riverctl map normal $MOD Shift Q "riverctl exit"
+
+riverctl map normal $MOD Shift Space toggle-float
+
+
+# Toggle float
+riverctl map normal $MOD Shift Space toggle-float
+
+# Focus movement
+riverctl map normal $MOD H focus-view left
+riverctl map normal $MOD J focus-view down
+riverctl map normal $MOD K focus-view up
+riverctl map normal $MOD L focus-view right
+
+# Move windows
+riverctl map normal $MOD Shift H swap left
+riverctl map normal $MOD Shift J swap down
+riverctl map normal $MOD Shift K swap up
+riverctl map normal $MOD Shift L swap right
+
+
+
 

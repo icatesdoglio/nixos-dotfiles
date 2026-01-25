@@ -120,8 +120,14 @@
         hostIP = "10.100.0.1";
 
         dnsReservations = {
-            "pihole.servemato.lan" = "10.100.0.1";
-            "home.servemato.lan" = "10.100.0.1";
+            "home.servemato.wg" = "10.100.0.1";
+            "home.servemato.lan" = "192.168.0.30";
+            "home.framework.wg" = "10.100.0.6";
+            "home.framework.lan" = "192.168.0.42";
+            "home.gp-linux.lan" = "192.168.0.20";
+            "home.gp-linux.wg" = "10.100.0.2";
+            "home.mini-mine.wg" = "10.100.0.3";
+            "home.mini-mine.lan" = "192.168.0.40";
         };
 
         wildcardDomains = [ "servemato.lan" ];
@@ -284,16 +290,6 @@
     networking.firewall.extraStopCommands = ''
         iptables -t nat -D POSTROUTING -o ca-van -j MASQUERADE || true
         '';
-    /* Tighten ca-van against spoofing */ 
-    /*
-    networking.firewall.extraRules = ''
-        iifname "wg0" ip saddr != 10.100.0.0/24 drop 
-
-        iifname "ca-van" ip saddr 10.0.0.0/8 drop
-        iifname "ca-van" ip saddr 172.16.0.0/12 drop
-        iifname "ca-van" ip saddr 192.168.0.0/16 drop
-        '';
-        */
 
     /* TODO:
        the this wireguard setup requires DNS 
@@ -461,16 +457,13 @@
         configDir = "/srv/jellyfin/config";
     };
 
-    systemd.services.plex.environment = {
-        PLEX_MEDIA_SERVER_PORT = "9699";
-    };
-
 
     systemd.tmpfiles.rules = [
         "d /srv 0770 root media -"
             "d /srv/radarr 0770 radarr media -"
             "d /srv/sonarr 0770 sonarr media -"
-            "d /srv/plex 0770 sonarr media -"
+            "d /srv/jellyfin 0770 jellyfin media -"
+            "d /data 0770 root media -"
     ];
 
 

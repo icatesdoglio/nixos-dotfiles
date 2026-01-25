@@ -61,6 +61,7 @@ in
       lib.optionals cfg.cli.enable (with pkgs; [
         ripgrep fd jq tree htop wget curl tmux
         zoxide starship sops
+        yazi fzf
       ])
 
       #################################
