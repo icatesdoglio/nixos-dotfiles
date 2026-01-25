@@ -110,7 +110,7 @@
 
         hyprland.enable = true;
         dwm.enable = true;
-        river.enable = false;
+        river.enable = true;
         plasma.enable = true;
 
         useDisplayManager = false;

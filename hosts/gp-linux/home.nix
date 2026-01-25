@@ -8,8 +8,16 @@
     neovim.enable = true;
     wezterm.enable = true;
     ssh.enable = true;
-    river.enable = false;
+    river.enable = true;
     confdev.enable = true;
+  };
+
+  
+  programs.bash.enable = true;
+
+  programs.fzf = {
+      enable = true;
+      enableBashIntegration = true;
   };
 
   my.games.minecraft.enable = true;

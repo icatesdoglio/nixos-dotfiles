@@ -1,0 +1,66 @@
+{
+    "layer": "top",
+    "modules-left": [
+        "river/tags", 
+        "river/layout",
+        "river/window"
+    ],
+    "modules-right": ["custom/network", "battery", "cpu", "custom/mem-cust", "pulseaudio", "clock"],
+
+    "river/tags": {
+        "num-tags": 32,
+        "on-click": "activate",
+        "tag-labels": [
+            "1","2","3","4","5","6","7","8","9",
+        "󰓓",  /* tag 10 */
+        "󰎁"   /* tag 11 */
+        ],
+        "hide-vacant": true
+    },
+
+
+    "river/layout": {
+        "format": "{}",
+        "replace": {
+            "rivertile - left": "[]=",
+            "rivertile - right": "=[]",
+            "rivertile - monocle": "[M]"
+        }
+    },
+
+
+    "custom/network": {
+        "exec": "~/.config/waybar/scripts/network",
+        "interval": 3,
+        "return-type": "json"
+    },
+
+    "battery": {
+        "format": "{icon} {capacity}%",
+        "format-icons": ["", "", "", "", ""],
+        "format-charging": " {capacity}%",
+        "format-plugged": " {capacity}%"
+    },
+
+    "clock": {
+        "format": " {:%H:%M}"
+    },
+
+    "cpu": {
+        "format": " {usage}%"
+    },
+
+    "custom/mem-cust": {
+        "exec": "~/.config/waybar/scripts/custom-memory",
+        "interval": 3
+    },
+
+    "pulseaudio": {
+        "format": "  {volume}%",
+        "format-muted": "",
+        "on-click": "~/.config/waybar/scripts/window", 
+        "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +1%",
+        "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -1%",
+        "tooltip": false
+    }
+}

@@ -34,6 +34,7 @@
 
         /* overlays */
         neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
+        waybar-icatesdoglio.url = "git+ssh://git@github.com/icatesdoglio/Waybar";
 
         /* custom flakes */
         confdev.url = "git+ssh://git@github.com/icatesdoglio/confdev";
@@ -57,6 +58,7 @@
             home-manager,
             r423,
             neovim-nightly-overlay,
+            waybar-icatesdoglio,
             confdev,
             suckless,
             bemenu,
@@ -65,6 +67,19 @@
     let
         overlays = [
         (import neovim-nightly-overlay)
+            (final: prev: {
+             waybar = prev.waybar.overrideAttrs (old: {
+                     src = waybar-icatesdoglio;
+
+                     version = "0.14.0-icatesdoglio";
+
+                     mesonFlags = (old.mesonFlags or []) ++ [
+                     "-Dcava=disabled"
+                     ];
+
+                     doInstallCheck = false;
+                     });
+             })
         ];
 
         dotfiles = self;
