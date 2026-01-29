@@ -25,6 +25,8 @@ in
         environment.systemPackages = with pkgs; [
             swaybg
             mako
+            swaylock
+            lswt
         ];
     };
 }

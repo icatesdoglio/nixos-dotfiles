@@ -36,8 +36,6 @@ riverctl map normal $MOD+Shift Return spawn firefox
 riverctl map normal $MOD R spawn /home/ian/.config/river/scripts/bemenu-custom-run
 
 riverctl map normal $MOD+Shift BackSpace exit
-riverctl map normal $MOD+Shift Space toggle-float
-
 
 # Toggle float
 riverctl map normal $MOD+Shift Space toggle-float
@@ -53,4 +51,50 @@ riverctl map normal $MOD+Shift H swap left
 riverctl map normal $MOD+Shift J swap down
 riverctl map normal $MOD+Shift K swap up
 riverctl map normal $MOD+Shift L swap right
+
+
+riverctl map normal $MOD Q close
+
+riverctl map-pointer normal $MOD BTN_LEFT move-view
+riverctl map-pointer normal $MOD BTN_RIGHT resize-view
+
+riverctl allow-tearing enabled
+
+
+#--------------------------------
+## RULES ------------------------
+#--------------------------------
+
+app_singleton() {
+  APP_ID="$1"
+  TAG="$2"
+  shift 2
+  CMD="$@"
+
+  if riverctl list-views | grep -q "app-id: $APP_ID"; then
+    riverctl set-focused-tags "$TAG"
+  else
+    $CMD &
+    riverctl set-focused-tags "$TAG"
+  fi
+}
+
+# Steam
+STEAM_TAG=$((2<<9))
+riverctl rule-add -app-id steam tags $STEAM_TAG
+riverctl map normal $MOD S spawn \
+  "app_singleton steam $STEAM_TAG steam"
+
+JELLY_TAG=$((2<<10))
+riverctl rule-add -app-id org.jellyfin.jellyfin-desktop tags $JELLY_TAG 
+riverctl rule-add -app-id org.jellyfin.jellyfin-desktop fullscreen
+riverctl map normal $MOD M spawn \
+  "app_singleton $JELLY_TAG jellyfin-desktop"
+
+riverctl map normal None XF86AudioMute  wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+riverctl map normal None XF86AudioRaiseVolume wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+
+riverctl map normal None XF86AudioLowerVolume wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+riverctl map normal None XF86MonBrightnessUp   brightnessctl set +10%
+riverctl map normal None XF86MonBrightnessDown brightnessctl set 10%-
+riverctl map normal None Print grim -g "$(slurp)"
 

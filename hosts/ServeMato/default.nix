@@ -133,6 +133,7 @@
         wildcardDomains = [ "servemato.lan" ];
 
     };
+    networking.firewall.interfaces.eth0.allowedTCPPorts = [ 22 ]; # ssh
     networking.firewall.interfaces.eth0.allowedUDPPorts = [ 
         51820 # Wireguard
     ];
@@ -394,7 +395,7 @@
 
                 /* security / sanity */
                 Preferences.WebUI.LocalHostAuth = false;
-                Preferences.WebUI.AuthSubnetWhitelistEnabled = true;
+                Preferences.WebUI.AuthSubnetWhitelistEnabled = false;
                 Preferences.WebUI.AuthSubnetWhitelist = "192.168.0.0/24,10.100.0.0/24";
 
                 /* optional: don’t expose upnp */
@@ -490,10 +491,13 @@
     services.openssh = {
         enable = true;
         openFirewall = false;
-        listenAddresses = [
-        { addr = "10.100.0.1"; port = 22; }
-        { addr = "192.168.0.30"; port = 22; }
-        ];
+    };
+
+    /* external drive */
+    fileSystems."/data" = {
+        device = "/dev/disk/by-uuid/3a2dd4a8-d3b8-4a1d-8636-fdf0907ec2ce";
+        fsType = "ext4";
+        options = [ "noatime" ];
     };
 
     system.stateVersion = "26.05";

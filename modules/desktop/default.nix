@@ -49,12 +49,21 @@ in
       xdg.portal.enable = true;
       xdg.portal.extraPortals = with pkgs; [
         xdg-desktop-portal-gtk
+        xdg-desktop-portal-hyprland
+        xdg-desktop-portal-wlr
       ];
+
+      xdg.portal.config = {
+        common.default = "hyprland";
+        hyprland.default = "hyprland";
+        river.default = "wlr";
+      };
 
       environment.systemPackages = with pkgs; [
         wl-clipboard
         wayland-utils
       ];
+
     })
 
     # Shared X11 plumbing
@@ -76,6 +85,8 @@ in
     (mkIf (cfg.enable && anyX11Enabled && cfg.useDisplayManager) {
       services.displayManager.sddm.enable = true;
     })
+
+
 
     # NVIDIA-specific Wayland fixes
     (mkIf (cfg.enable && anyWaylandEnabled && nvidiaEnabled) {
