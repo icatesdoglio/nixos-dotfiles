@@ -1,4 +1,4 @@
-{ config, sops-nix, ... }:
+{ config, pkgs, ... }:
 
 {
 
@@ -119,6 +119,13 @@
     nix.settings.secret-key-files = [
         "/etc/nix/desktop-cache.key"
     ];
+
+    programs.steam = {
+        enable = true;
+        extraCompatPackages = with pkgs; [
+            proton-ge-bin
+        ];
+    };
 
     system.stateVersion = "26.05";
 }
