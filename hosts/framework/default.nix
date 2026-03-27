@@ -113,6 +113,8 @@
 	my.services.ssh.enable = true;
 
     networking.networkmanager.enable = true;
+    networking.networkmanager.wifi.backend = "iwd";
+    services.iwd.enable = true;
     networking.firewall.checkReversePath = "loose";
     networking.networkmanager.ensureProfiles.profiles."home-static" = {
         connection = {
@@ -132,7 +134,7 @@
             method = "manual";
             addresses = "192.168.0.60/24";
             gateway = "192.168.0.1";
-            dns = "10.100.0.1;1.1.1.1";
+            dns = "10.100.0.1";
             # ignore-auto-dns = true;
         };
         ipv6.method = "ignore";

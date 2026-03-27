@@ -170,15 +170,14 @@
         wildcardDomains = [ "servemato.lan" ];
 
     };
-    /*
     services.caddy = {
         enable = true;
 
-        virtualHosts."servemato.lan" = {
+        virtualHosts."seafile.servemato.lan" = {
             extraConfig = ''
                 tls internal
 
-                reverse_proxy 127.0.0.1:8001 {
+                reverse_proxy 127.0.0.1:8082 {
                     header_up Host {host}
                     header_up X-Forwarded-Proto {scheme}
                     header_up X-Forwarded-For {remote}
@@ -186,9 +185,6 @@
             '';
         };
     };
-
-    networking.firewall.allowedTCPPorts = [ 80 443 ];
-     */
 
 
     networking.firewall.interfaces.eth0.allowedTCPPorts = [
@@ -204,9 +200,11 @@
         51821   # Torrent port (UDP, DHT)
         51822   # Wireguard -- VPS
     ];
-    networking.firewall.interfaces.wg0.allowedTCPPorts = [ 
+    networking.firewall.interfaces.wg0.allowedTCPPorts = [
         22      # SSH
         53      # DNS
+        80      # HTTP (Caddy)
+        443     # HTTPS (Caddy)
         3000    # Home Page
         8081    # Web UI
         9696    # prowlarr
@@ -441,6 +439,15 @@
             }
             ];
 
+            Files = [
+            {
+                Seafile = {
+                    href = "https://seafile.servemato.lan";
+                    description = "File sync and storage";
+                };
+            }
+            ];
+
             Infrastructure = [
             {
                 Pi-hole = {
@@ -540,6 +547,74 @@
         dataDir = "/srv/jellyfin/data";
         configDir = "/srv/jellyfin/config";
         cacheDir = "/var/cache/jellyfin";
+    };
+
+    environment.etc."seafile/docker-compose.yml".text = ''
+        services:
+          db:
+            image: mariadb:10.11
+            environment:
+              MYSQL_ROOT_PASSWORD: ''${MYSQL_ROOT_PASSWORD}
+              MYSQL_LOG_CONSOLE: "true"
+              MARIADB_AUTO_UPGRADE: "1"
+            volumes:
+              - /srv/seafile/db:/var/lib/mysql
+            networks:
+              - seafile-net
+            restart: unless-stopped
+
+          memcached:
+            image: memcached:1.6.29
+            entrypoint: memcached -m 256
+            networks:
+              - seafile-net
+            restart: unless-stopped
+
+          seafile:
+            image: seafileltd/seafile-mc:11.0-latest
+            ports:
+              - "127.0.0.1:8082:80"
+            volumes:
+              - /srv/seafile/data:/shared
+            environment:
+              DB_HOST: db
+              DB_ROOT_PASSWD: ''${MYSQL_ROOT_PASSWORD}
+              DB_PASSWORD: ''${SEAFILE_DB_PASSWORD}
+              SEAFILE_ADMIN_EMAIL: iancatesdoglio@gmail.com
+              SEAFILE_ADMIN_PASSWORD: ''${SEAFILE_ADMIN_PASSWORD}
+              SEAFILE_SERVER_LETSENCRYPT: "false"
+              SEAFILE_SERVER_HOSTNAME: seafile.servemato.lan
+            depends_on:
+              - db
+              - memcached
+            networks:
+              - seafile-net
+            restart: unless-stopped
+
+        networks:
+          seafile-net:
+    '';
+
+    systemd.services.seafile = {
+        description = "Seafile Compose Stack";
+        after = [ "podman.socket" "network-online.target" ];
+        requires = [ "podman.socket" ];
+        wants = [ "network-online.target" ];
+        wantedBy = [ "multi-user.target" ];
+
+        serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStartPre = pkgs.writeShellScript "seafile-setup-env" ''
+                install -m 0600 /dev/null /run/seafile.env
+                printf 'MYSQL_ROOT_PASSWORD=%s\n' "$(cat ${config.sops.secrets."mariadb-root-password".path})" >> /run/seafile.env
+                printf 'SEAFILE_DB_PASSWORD=%s\n'  "$(cat ${config.sops.secrets."seafile-db-password".path})"  >> /run/seafile.env
+                printf 'SEAFILE_ADMIN_PASSWORD=%s\n' "$(cat ${config.sops.secrets."seafile-admin-password".path})" >> /run/seafile.env
+            '';
+            ExecStart  = "${pkgs.docker-compose}/bin/docker-compose -f /etc/seafile/docker-compose.yml --env-file /run/seafile.env up -d";
+            ExecStop   = "${pkgs.docker-compose}/bin/docker-compose -f /etc/seafile/docker-compose.yml down";
+            ExecReload = "${pkgs.docker-compose}/bin/docker-compose -f /etc/seafile/docker-compose.yml pull";
+        };
     };
 
     virtualisation.podman = {
