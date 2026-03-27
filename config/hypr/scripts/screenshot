@@ -1,0 +1,5 @@
+#!/bin/sh
+tmpfile=$(mktemp /tmp/screenshot-XXXX.png)
+slurp_result=$(slurp) || exit 1
+grim -g "$slurp_result" "$tmpfile" && wl-copy < "$tmpfile"
+rm -f "$tmpfile"

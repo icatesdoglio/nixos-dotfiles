@@ -15,6 +15,8 @@ in
     };
 
     config = lib.mkIf cfg.enable {
+        security.sudo.extraConfig = "Defaults timestamp_timeout=60";
+
         time.timeZone = cfg.timezone;
 
         nix.settings.experimental-features = [

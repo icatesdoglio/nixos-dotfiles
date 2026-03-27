@@ -15,8 +15,9 @@ in
 
       matchBlocks = {
         "*" = {
-          identityAgent = "none";
+          identityFile = "~/.ssh/id_ed25519";
           identitiesOnly = true;
+          addKeysToAgent = "yes";
           serverAliveInterval = 30;
           serverAliveCountMax = 3;
           forwardAgent = false;

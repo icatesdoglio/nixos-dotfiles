@@ -114,7 +114,6 @@
 
     networking.networkmanager.enable = true;
     networking.networkmanager.wifi.backend = "iwd";
-    services.iwd.enable = true;
     networking.firewall.checkReversePath = "loose";
     networking.networkmanager.ensureProfiles.profiles."home-static" = {
         connection = {
@@ -157,14 +156,15 @@
         enable = true;
     };
     environment.systemPackages = with pkgs; [
-        alsa-utils      
-            pulseaudio  
-            pavucontrol 
+        alsa-utils
+            pulseaudio
+            pavucontrol
             spotify
             dig
             jellyfin-desktop
             mpv
             wineWow64Packages.stable
+            seafile-client
     ];
     hardware.enableAllFirmware = true;
     hardware.firmware = [ pkgs.sof-firmware ];

@@ -607,9 +607,14 @@
             RemainAfterExit = true;
             ExecStartPre = pkgs.writeShellScript "seafile-setup-env" ''
                 install -m 0600 /dev/null /run/seafile.env
-                printf 'MYSQL_ROOT_PASSWORD=%s\n' "$(cat ${config.sops.secrets."mariadb-root-password".path})" >> /run/seafile.env
-                printf 'SEAFILE_DB_PASSWORD=%s\n'  "$(cat ${config.sops.secrets."seafile-db-password".path})"  >> /run/seafile.env
-                printf 'SEAFILE_ADMIN_PASSWORD=%s\n' "$(cat ${config.sops.secrets."seafile-admin-password".path})" >> /run/seafile.env
+                printf 'MYSQL_ROOT_PASSWORD=%s\n' "$(sed 's/\$/\$\$/g' ${config.sops.secrets."mariadb-root-password".path})" >> /run/seafile.env
+                printf 'SEAFILE_DB_PASSWORD=%s\n'  "$(sed 's/\$/\$\$/g' ${config.sops.secrets."seafile-db-password".path})"  >> /run/seafile.env
+                printf 'SEAFILE_ADMIN_PASSWORD=%s\n' "$(sed 's/\$/\$\$/g' ${config.sops.secrets."seafile-admin-password".path})" >> /run/seafile.env
+
+                CONF=/srv/seafile/data/seafile/conf/seahub_settings.py
+                if [ -f "$CONF" ] && ! grep -q 'CSRF_TRUSTED_ORIGINS' "$CONF"; then
+                    echo 'CSRF_TRUSTED_ORIGINS = ["https://seafile.servemato.lan"]' >> "$CONF"
+                fi
             '';
             ExecStart  = "${pkgs.docker-compose}/bin/docker-compose -f /etc/seafile/docker-compose.yml --env-file /run/seafile.env up -d";
             ExecStop   = "${pkgs.docker-compose}/bin/docker-compose -f /etc/seafile/docker-compose.yml down";
