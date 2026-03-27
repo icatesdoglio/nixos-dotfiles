@@ -1,4 +1,4 @@
-{ pkgs, lib, config, ... }:
+{ pkgs, config, ... }:
 
 {
     imports = [
@@ -58,9 +58,33 @@
             group = "root";
             mode = "0400";
         };
+        "seafile-admin-password" = {
+            sopsFile = ../../secrets/seafile.yaml;
+            format = "yaml";
+            path = "/run/secrets/seafile-admin-password";
+            owner = "root"; 
+            group = "root"; 
+            mode = "0400";
+        };
+        "mariadb-root-password" = {
+            sopsFile = ../../secrets/seafile.yaml;
+            format = "yaml";
+            path = "/run/secrets/mariadb-root-password";
+            owner = "root"; 
+            group = "root"; 
+            mode = "0400";
+        };
+        "seafile-db-password" = {
+            sopsFile = ../../secrets/seafile.yaml;
+            format = "yaml";
+            path = "/run/secrets/seafile-db-password";
+            owner = "root"; 
+            group = "root"; 
+            mode = "0400";
+        };
     };
 
-    environment.systemPackages = with pkgs; [ age sops ssh-to-age iproute2 nftables ];
+    environment.systemPackages = with pkgs; [ age sops ssh-to-age iproute2 nftables podman-compose ];
 
     users.users.root.openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBtghfDdBX+s+XnZbnP3kiV83dCVymSO4Zhv/SudP8pS"
@@ -103,6 +127,19 @@
         createHome = true;
     };
 
+    users.users.seafile = {
+        isSystemUser = true;
+        uid = 994;
+        group = "seafile";
+        home = "/srv/seafile";
+        createHome = true;
+    };
+
+    users.groups.seafile = {
+        gid = 995;
+    };
+
+
     /**********************************
       Pi-Hole and DNS resolution
      ***********************************/
@@ -133,7 +170,31 @@
         wildcardDomains = [ "servemato.lan" ];
 
     };
-    networking.firewall.interfaces.eth0.allowedTCPPorts = [ 22 ]; # ssh
+    /*
+    services.caddy = {
+        enable = true;
+
+        virtualHosts."servemato.lan" = {
+            extraConfig = ''
+                tls internal
+
+                reverse_proxy 127.0.0.1:8001 {
+                    header_up Host {host}
+                    header_up X-Forwarded-Proto {scheme}
+                    header_up X-Forwarded-For {remote}
+                }
+            '';
+        };
+    };
+
+    networking.firewall.allowedTCPPorts = [ 80 443 ];
+     */
+
+
+    networking.firewall.interfaces.eth0.allowedTCPPorts = [
+        22 # SSH
+            53 # DNS
+    ]; 
     networking.firewall.interfaces.eth0.allowedUDPPorts = [ 
         51820 # Wireguard
     ];
@@ -197,8 +258,18 @@
                   publicKey = "8A7L4okGuJSPtHIHxVNcTT18iGKr50Ipz18G9LAQKgE=";
                   allowedIPs = [ "10.100.0.6/32" ];
               };
+              pepper = {
+                  publicKey = "MH26xzZZKjtGK5gCJcfgh1T1RQ0rLqH3JThwOFi07Rs=";
+                  allowedIPs = [ "10.100.0.7/32" ];
+              };
           };
           postSetup = ''
+              ${pkgs.iproute2}/bin/ip rule add \
+              to 10.100.0.0/24 \
+              lookup main \
+              priority 840 \
+              2>/dev/null || true
+
               ${pkgs.iproute2}/bin/ip rule add \
               iif wg0 \
               lookup main \
@@ -207,6 +278,12 @@
               '';
 
           postShutdown = ''
+              ${pkgs.iproute2}/bin/ip rule del \
+              to 10.100.0.0/24 \
+              lookup main \
+              priority 840 \
+              2>/dev/null || true
+
               ${pkgs.iproute2}/bin/ip rule del \
               iif wg0 \
               lookup main \
@@ -302,6 +379,11 @@
             "unbound.service"
             "pihole-ftl.service"
     ];
+    systemd.services.unbound = {
+        after = [ "network.target" ];
+        wants = [ "network.target" ];
+        wantedBy = [ "multi-user.target" ];
+    };
 
 
     /*** ensure domain in cloudflare has correct configuration" ***/
@@ -448,6 +530,7 @@
             };
         };
     };
+
     services.jellyfin = {
         enable = true;
         openFirewall = true;
@@ -456,16 +539,62 @@
         group = "media";
         dataDir = "/srv/jellyfin/data";
         configDir = "/srv/jellyfin/config";
+        cacheDir = "/var/cache/jellyfin";
     };
 
+    virtualisation.podman = {
+        enable = true;
+        dockerCompat = true;     # provides `docker` CLI
+            dockerSocket.enable = true;
+    };
 
     systemd.tmpfiles.rules = [
         "d /srv 0770 root media -"
+            "d /data 0770 root media -"
+
+            "d /srv/media/downloads 0770 qbit media -"
+
+            "d /data/seafile 0770 seafile seafile -"
+            "d /data/media 0770 root media -"
+            "d /data/syncthing 0770 syncthing syncthing -"
+
+            "d /srv/seafile 0770 seafile seafile -"
+            "d /srv/media 0770 root media -"
+            "d /srv/syncthing 0770 syncthing syncthing -"
+
             "d /srv/radarr 0770 radarr media -"
             "d /srv/sonarr 0770 sonarr media -"
+
             "d /srv/jellyfin 0770 jellyfin media -"
-            "d /data 0770 root media -"
+            "d /srv/jellyfin/data 0770 jellyfin media -"
+            "d /srv/jellyfin/config 0770 jellyfin media -"
+            "d /var/cache/jellyfin 0770 jellyfin media -"
     ];
+
+    fileSystems."/srv/seafile" = {
+        device = "/data/seafile";
+        fsType = "none"; 
+        options = [ "bind" ];
+    };
+
+    fileSystems."/srv/media" = {
+        device = "/data/media";
+        fsType = "none";
+        options = [ "bind" ];
+    };
+
+    fileSystems."/srv/syncthing" = {
+        device = "/data/syncthing";
+        fsType = "none";
+        options = [ "bind" ];
+    };
+
+    fileSystems."/var/cache/jellyfin" = {
+        device = "tmpfs";
+        fsType = "tmpfs";
+        options = [ "size=4G" "mode=0770" ];
+    };
+
 
 
     zramSwap.enable = true;

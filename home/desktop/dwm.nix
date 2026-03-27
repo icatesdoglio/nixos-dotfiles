@@ -1,7 +1,7 @@
 { config, lib, suckless, pkgs, ... }:
 
 let
-  system = pkgs.system;
+  system = pkgs.stdenv.hostPlatform.system;
 in
 {
   options.my.hm.desktop.dwm.enable =

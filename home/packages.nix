@@ -41,6 +41,12 @@ in
       description = "R environment";
     };
 
+    bluetooth.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Bluetui mostly";
+    };
+
     custom.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -72,6 +78,8 @@ in
         rustup
         nodejs
         lua-language-server
+        claude-code
+        databricks-cli
       ])
 
       #################################
@@ -98,7 +106,14 @@ in
         (pkgs.writeShellScriptBin "R42" ''
           exec ${legacy.rWrapper}/bin/R "$@"
         '')
-      ];
+      ]
+
+      #################################
+      # bluetooth
+      #################################
+      ++ lib.optionals cfg.bluetooth.enable (with pkgs; [
+        bluetui
+      ]);
 
       /** #################################
       # Custom

@@ -25,7 +25,7 @@ in
             pkgs.nushell
             pkgs.pavucontrol
             pkgs.apple-cursor
-            bemenu.packages.${pkgs.system}.default
+            bemenu.packages.${pkgs.stdenv.hostPlatform.system}.default
             pkgs.brightnessctl
         ]
       ++ lib.optional cfg.withWaybar pkgs.waybar;

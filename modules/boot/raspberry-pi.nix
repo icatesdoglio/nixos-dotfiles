@@ -16,7 +16,7 @@ lib.mkIf (config.my.host.platform == "raspberry-pi") {
   # Bootloader (nvmd-owned)
   ##########################################################################
 
-  boot.loader.raspberryPi = {
+  boot.loader.raspberry-pi = {
     enable = true;
     bootloader = "kernel";
   };

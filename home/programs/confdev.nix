@@ -8,7 +8,7 @@
 
     # 1) Install your binary
     home.packages = [
-      confdev.packages.${pkgs.system}.default
+      confdev.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
 
     # 2) Create the dummy marker file

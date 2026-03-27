@@ -1,4 +1,4 @@
-{ lib, config, sops-nix, pkgs, ... }:
+{ lib, config, pkgs, ... }:
 
 let
 cfg = config.my.networking.pihole;
@@ -69,8 +69,8 @@ in {
 
             settings = {
                 dns = {
-                    interface = "all";
-                    listeningMode = "all";  # or "local" / "all"
+                    interface = [ "eth0" "wg0" "lo" ];
+                    listeningMode = "local";  # or "local" / "all"
                         upstreams = [ "127.0.0.1#5335" ];
 
                     domainNeeded = true;
@@ -82,6 +82,7 @@ in {
                 };
 
                 misc.dnsmasq_lines = [
+                "bind-interfaces"
                     "expand-hosts"
                         "domain-needed"
                         "bogus-priv"

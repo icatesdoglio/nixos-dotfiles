@@ -101,6 +101,13 @@
     networking.nat.enable = true;
     networking.nat.externalInterface = "wlp191s0";
 
+    # MT7925 (WiFi 7): disable ASPM to prevent PCIe power-state freeze,
+    # disable CLC to suppress 6 GHz regulatory failures that cause roaming loop
+    boot.extraModprobeConfig = ''
+        options mt7925e disable_aspm=1
+        options mt7925_common disable_clc=1
+    '';
+
 
 
 	my.services.ssh.enable = true;
@@ -125,20 +132,9 @@
             method = "manual";
             addresses = "192.168.0.60/24";
             gateway = "192.168.0.1";
-            dns = "10.100.0.1";
+            dns = "10.100.0.1;1.1.1.1";
             # ignore-auto-dns = true;
         };
-        ipv6.method = "ignore";
-    };
-
-    networking.networkmanager.ensureProfiles.profiles."wifi-auto" = {
-        connection = {
-            id = "wifi-auto";
-            type = "wifi";
-            interface-name = "wlp191s0";
-            autoconnect = true;
-        };
-        ipv4.method = "auto";
         ipv6.method = "ignore";
     };
 
@@ -155,7 +151,9 @@
         alsa.enable = true;
         alsa.support32Bit = true;
     };
-    hardware.bluetooth.enable = true;
+    hardware.bluetooth = {
+        enable = true;
+    };
     environment.systemPackages = with pkgs; [
         alsa-utils      
             pulseaudio  
@@ -163,6 +161,8 @@
             spotify
             dig
             jellyfin-desktop
+            mpv
+            wineWow64Packages.stable
     ];
     hardware.enableAllFirmware = true;
     hardware.firmware = [ pkgs.sof-firmware ];
@@ -197,6 +197,7 @@
         ];
     };
     
+    # services.caddy.enable = true;
 
     system.stateVersion = "26.05";
 }

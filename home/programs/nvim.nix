@@ -29,7 +29,7 @@ in
                     blink-cmp-conventional-commits
                     oil-nvim
                     friendly-snippets
-                    fugitive
+                    vim-fugitive
             ];
 
             viAlias = true;
