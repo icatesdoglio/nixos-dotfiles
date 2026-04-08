@@ -6,4 +6,3 @@
     ./cloudflared.nix
   ];
 }
-

@@ -1,9 +1,13 @@
-{ lib, config, pkgs, legacy, confdev, ... }:
-
-let
-  cfg = config.my.hm.packages;
-in
 {
+  lib,
+  config,
+  pkgs,
+  legacy,
+  confdev,
+  ...
+}: let
+  cfg = config.my.hm.packages;
+in {
   #################################
   # Options
   #################################
@@ -59,45 +63,62 @@ in
   #################################
 
   config = lib.mkIf cfg.enable {
-
     home.packages =
       #################################
       # CLI
       #################################
       lib.optionals cfg.cli.enable (with pkgs; [
-        ripgrep fd jq tree htop wget curl tmux
-        zoxide starship sops
-        yazi fzf
+        ripgrep
+        fd
+        jq
+        tree
+        htop
+        wget
+        curl
+        tmux
+        zoxide
+        starship
+        sops
+        yazi
+        fzf
       ])
-
       #################################
       # Dev
       #################################
       ++ lib.optionals cfg.dev.enable (with pkgs; [
-        uv python313 pyright
+        uv
+        python313
+        pyright
         rustup
         nodejs
         lua-language-server
         claude-code
         databricks-cli
+        slack
+        # zoom-us
       ])
-
       #################################
       # C / C++
       #################################
       ++ lib.optionals cfg.cpp.enable (with pkgs; [
-        gcc gnumake cmake ninja
+        gcc
+        gnumake
+        cmake
+        ninja
         clang-tools
-        pkg-config gdb unzip
+        pkg-config
+        gdb
+        unzip
       ])
-
       #################################
       # Nix
       #################################
       ++ lib.optionals cfg.nix.enable (with pkgs; [
-        nixd alejandra statix deadnix
+        nixd
+        alejandra
+        statix
+        deadnix
       ])
-
       #################################
       # R
       #################################
@@ -107,7 +128,6 @@ in
           exec ${legacy.rWrapper}/bin/R "$@"
         '')
       ]
-
       #################################
       # bluetooth
       #################################
@@ -115,13 +135,13 @@ in
         bluetui
       ]);
 
-      /** #################################
-      # Custom
-      #################################
-      ++ lib.optionals cfg.custom.enable [
-        (confdev.packages.${pkgs.system}.default)
-      ];
-      */
+    /**
+       #################################
+    # Custom
+    #################################
+    ++ lib.optionals cfg.custom.enable [
+      (confdev.packages.${pkgs.system}.default)
+    ];
+    */
   };
 }
-

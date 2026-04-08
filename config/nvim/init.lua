@@ -111,6 +111,19 @@ vim.lsp.config("lua_ls", {
 })
 vim.lsp.enable("lua_ls")
 
+vim.lsp.config("pyright", {
+  cmd = { "pyright-langserver", "--stdio" },
+  filetypes = { "python" },
+  root_markers = { "pyproject.toml", "setup.py", "setup.cfg", ".git" },
+  settings = {
+    python = {
+      analysis = {
+        autoSearchPaths = true,
+        useLibraryCodeForTypes = true,
+      },
+    },
+  },
+})
 vim.lsp.enable("pyright")
 vim.lsp.enable("rust_analyzer")
 -- vim.lsp.config("rust_analyzer", {
@@ -131,6 +144,12 @@ vim.lsp.config("nixd", {
   },
 })
 vim.lsp.enable("nixd")
+
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function(args)
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, { buffer = args.buf })
+  end,
+})
 
 local blink = require("blink.cmp")
 

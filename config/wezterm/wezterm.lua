@@ -8,7 +8,7 @@ config.color_scheme = "tokyonight"
 
 
 
-config.font = wezterm.font("Inconsolata Nerd Font Mono")
+config.font = wezterm.font("JetBrainsMono Nerd Font Mono")
 
 config.font_size = 13
 

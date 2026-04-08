@@ -15,18 +15,15 @@
   programs.bash.enable = true;
 
   programs.fzf = {
-      enable = true;
-      enableBashIntegration = true;
+    enable = true;
+    enableBashIntegration = true;
   };
 
   my.games = {
-      minecraft.enable = false;
+    minecraft.enable = false;
   };
-
 
   my.hm.packages = {
     enable = true;
   };
-
-
 }

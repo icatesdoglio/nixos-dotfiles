@@ -1,6 +1,9 @@
-{ lib, config, pkgs, ... }:
-
-let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   inherit (lib) mkEnableOption mkIf mkMerge mkOption types;
 
   cfg = config.my.desktop;
@@ -9,17 +12,15 @@ let
   # make sure to register new desktops with the correct environment
   anyWaylandEnabled = cfg.hyprland.enable || cfg.river.enable || cfg.plasma.enable;
   anyX11Enabled = cfg.dwm.enable;
-
-in
-{
-    imports = [
-        ./fonts.nix
-        ./audio.nix
-        ./hyprland.nix
-        ./dwm.nix
-        ./river.nix
-        ./plasma.nix
-    ];
+in {
+  imports = [
+    ./fonts.nix
+    ./audio.nix
+    ./hyprland.nix
+    ./dwm.nix
+    ./river.nix
+    ./plasma.nix
+  ];
   options.my.desktop = {
     enable = mkOption {
       type = types.bool;
@@ -28,16 +29,13 @@ in
     };
 
     useDisplayManager = mkOption {
-        type = types.bool;
-        default = false;
-        description = "Whether to use a display manager (GDM/SDDM/etc)";
+      type = types.bool;
+      default = false;
+      description = "Whether to use a display manager (GDM/SDDM/etc)";
     };
-
-
   };
 
   config = mkMerge [
-
     # Shared desktop defaults
     (mkIf cfg.enable {
       my.desktop.audio.enable = true;
@@ -63,7 +61,6 @@ in
         wl-clipboard
         wayland-utils
       ];
-
     })
 
     # Shared X11 plumbing
@@ -85,8 +82,6 @@ in
     (mkIf (cfg.enable && anyX11Enabled && cfg.useDisplayManager) {
       services.displayManager.sddm.enable = true;
     })
-
-
 
     # NVIDIA-specific Wayland fixes
     (mkIf (cfg.enable && anyWaylandEnabled && nvidiaEnabled) {

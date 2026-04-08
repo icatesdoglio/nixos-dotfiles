@@ -1,8 +1,5 @@
-{...}:
-
-{
-    imports = [
-        ./ian.nix
-    ];
-
+{...}: {
+  imports = [
+    ./ian.nix
+  ];
 }

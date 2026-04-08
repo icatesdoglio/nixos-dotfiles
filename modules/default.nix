@@ -1,16 +1,13 @@
-{ ... }:
-
-{
-    imports = [
-        ./bootstrap.nix
-        ./hostname.nix
-        ./boot
-        ./system
-        ./services
-        ./networking
-        ./hardware
-        ./desktop
-        ./roles
-    ];
+{...}: {
+  imports = [
+    ./bootstrap.nix
+    ./hostname.nix
+    ./boot
+    ./system
+    ./services
+    ./networking
+    ./hardware
+    ./desktop
+    ./roles
+  ];
 }
-

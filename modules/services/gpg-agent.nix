@@ -1,9 +1,11 @@
-{ lib, config, pkgs, ... }:
-
-let
-  cfg = config.my.services.gpgAgent;
-in
 {
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
+  cfg = config.my.services.gpgAgent;
+in {
   options.my.services.gpgAgent = {
     enable = lib.mkEnableOption "GnuPG agent with SSH support";
   };
@@ -15,4 +17,3 @@ in
     };
   };
 }
-

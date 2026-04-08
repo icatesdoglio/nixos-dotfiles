@@ -1,11 +1,11 @@
-{ lib, config, ... }:
-
-with lib;
-
-let
-  cfg = config.my.roles.dns;
-in
 {
+  lib,
+  config,
+  ...
+}:
+with lib; let
+  cfg = config.my.roles.dns;
+in {
   options.my.roles.dns = {
     enable = mkEnableOption "DNS role (Unbound / Cloudflared)";
 
@@ -22,7 +22,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
-  };
+  config =
+    mkIf cfg.enable {
+    };
 }
-

@@ -1,27 +1,27 @@
-{ lib, config, ... }:
-
-with lib;
-
-let
-  cfg = config.my.services.unbound;
-in
 {
+  lib,
+  config,
+  ...
+}:
+with lib; let
+  cfg = config.my.services.unbound;
+in {
   options.my.services.unbound = {
     enable = mkEnableOption "Unbound DNS resolver";
 
     listenAddresses = mkOption {
       type = types.listOf types.str;
-      default = [ "127.0.0.1" ];
+      default = ["127.0.0.1"];
     };
 
     accessControl = mkOption {
       type = types.listOf types.str;
-      default = [ "127.0.0.0/8 allow" ];
+      default = ["127.0.0.0/8 allow"];
     };
 
     forwarders = mkOption {
       type = types.listOf types.str;
-      default = [ "1.1.1.1" "8.8.8.8" ];
+      default = ["1.1.1.1" "8.8.8.8"];
       description = "Upstream DNS servers";
     };
   };
@@ -44,12 +44,13 @@ in
           cache-max-ttl = 86400;
         };
 
-        forward-zone = [{
-          name = ".";
-          forward-addr = cfg.forwarders;
-        }];
+        forward-zone = [
+          {
+            name = ".";
+            forward-addr = cfg.forwarders;
+          }
+        ];
       };
     };
   };
 }
-

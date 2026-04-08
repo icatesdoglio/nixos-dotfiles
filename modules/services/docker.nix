@@ -1,9 +1,10 @@
-{ lib, config, ... }:
-
-let
-  cfg = config.my.services.docker;
-in
 {
+  lib,
+  config,
+  ...
+}: let
+  cfg = config.my.services.docker;
+in {
   options.my.services.docker = {
     enable = lib.mkEnableOption "Docker";
   };
@@ -12,4 +13,3 @@ in
     virtualisation.docker.enable = true;
   };
 }
-

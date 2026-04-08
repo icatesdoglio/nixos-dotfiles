@@ -1,11 +1,11 @@
-{ lib, config, ... }:
-
-with lib;
-
-let
-  cfg = config.my.roles.edge;
-in
 {
+  lib,
+  config,
+  ...
+}:
+with lib; let
+  cfg = config.my.roles.edge;
+in {
   options.my.roles.edge = {
     enable = mkEnableOption "Edge server role (VPN + DNS)";
 
@@ -39,23 +39,21 @@ in
   };
 
   config = mkIf cfg.enable {
-
     # DNS is bundled, but user can override role settings
     my.roles.dns = {
       enable = true;
       useCloudflared = cfg.useCloudflaredDNS;
-      allowedSubnets = [ cfg.vpnSubnet "127.0.0.0/8" ];
+      allowedSubnets = [cfg.vpnSubnet "127.0.0.0/8"];
     };
 
     my.wireguard.enable = true;
 
     my.wireguard.interfaces.${cfg.interface} = {
-        mode = "server";
-        interface = cfg.interface;
-        listenPort = cfg.listenPort;
+      mode = "server";
+      interface = cfg.interface;
+      listenPort = cfg.listenPort;
 
-
-        firewallUDPPorts = [ cfg.listenPort ];
+      firewallUDPPorts = [cfg.listenPort];
     };
 
     assertions = [
@@ -70,4 +68,3 @@ in
     ];
   };
 }
-

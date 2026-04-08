@@ -1,5 +1,9 @@
-{ config, lib, pkgs, ... }:
-
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 lib.mkIf (config.my.host.platform == "x86_64") {
   assertions = [
     {
@@ -11,4 +15,3 @@ lib.mkIf (config.my.host.platform == "x86_64") {
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 }
-

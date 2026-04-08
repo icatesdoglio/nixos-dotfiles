@@ -1,7 +1,7 @@
 {
-    imports = [
-        ./hyprland.nix
-        ./dwm.nix
-        ./plasma.nix
-    ];
+  imports = [
+    ./hyprland.nix
+    ./dwm.nix
+    ./plasma.nix
+  ];
 }

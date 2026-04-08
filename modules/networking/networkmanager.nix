@@ -1,9 +1,10 @@
-{ lib, config, ... }:
-
-let
-  cfg = config.my.networking.networkmanager;
-in
 {
+  lib,
+  config,
+  ...
+}: let
+  cfg = config.my.networking.networkmanager;
+in {
   options.my.networking.networkmanager = {
     enable = lib.mkEnableOption "NetworkManager";
   };
@@ -12,4 +13,3 @@ in
     networking.networkmanager.enable = true;
   };
 }
-

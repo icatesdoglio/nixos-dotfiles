@@ -1,6 +1,9 @@
-{ lib, config, pkgs, ... }:
-
-let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   inherit (lib) mkEnableOption mkIf mkMerge types mkOption;
   cfg = config.my.desktop.wayland;
 
@@ -8,8 +11,7 @@ let
     cfg.hyprland.enable
     || cfg.sway.enable
     || cfg.weston.enable;
-in
-{
+in {
   options.my.desktop.wayland = {
     enable = mkOption {
       type = types.bool;
@@ -18,8 +20,8 @@ in
     };
 
     hyprland.enable = mkEnableOption "Enable Hyprland (Wayland)";
-    sway.enable     = mkEnableOption "Enable Sway (Wayland)";
-    weston.enable   = mkEnableOption "Enable Weston (Wayland)";
+    sway.enable = mkEnableOption "Enable Sway (Wayland)";
+    weston.enable = mkEnableOption "Enable Weston (Wayland)";
   };
 
   config = mkMerge [
@@ -52,4 +54,3 @@ in
     })
   ];
 }
-

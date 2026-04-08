@@ -1,9 +1,10 @@
-{ lib, config, ... }:
-
-let
-  cfg = config.my.hm.programs.ssh;
-in
 {
+  lib,
+  config,
+  ...
+}: let
+  cfg = config.my.hm.programs.ssh;
+in {
   options.my.hm.programs.ssh.enable =
     lib.mkEnableOption "SSH configuration";
 
@@ -11,7 +12,6 @@ in
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
-
 
       matchBlocks = {
         "*" = {
@@ -30,10 +30,10 @@ in
         };
 
         gp-linux = {
-            hostname = "10.100.0.2";
-            user = "ian";
-            identityFile = "~/.ssh/id_ed25519";
-            proxyJump = "servemato";
+          hostname = "10.100.0.2";
+          user = "ian";
+          identityFile = "~/.ssh/id_ed25519";
+          proxyJump = "servemato";
         };
 
         mini-mine = {
@@ -45,4 +45,3 @@ in
     };
   };
 }
-

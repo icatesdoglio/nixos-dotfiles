@@ -1,11 +1,15 @@
-{ lib, config, pkgs, inputs, confdev, ... }:
-
 {
+  lib,
+  config,
+  pkgs,
+  inputs,
+  confdev,
+  ...
+}: {
   options.my.hm.programs.confdev.enable =
     lib.mkEnableOption "Enable confdev binary + marker file";
 
   config = lib.mkIf config.my.hm.programs.confdev.enable {
-
     # 1) Install your binary
     home.packages = [
       confdev.packages.${pkgs.stdenv.hostPlatform.system}.default
@@ -20,4 +24,3 @@
     '';
   };
 }
-

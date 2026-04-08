@@ -1,8 +1,10 @@
-{ lib, config, ... }:
-let 
-    cfg = config.my.networking.unbound;
-in
 {
+  lib,
+  config,
+  ...
+}: let
+  cfg = config.my.networking.unbound;
+in {
   options.my.networking.unbound = {
     enable = lib.mkEnableOption "Unbound recursive DNS Resolver";
   };
@@ -11,17 +13,17 @@ in
     services.unbound = {
       enable = true;
       settings = {
-          forward-zone = [
+        forward-zone = [
           {
-              name = ".";
-              forward-addr = ["1.1.1.1@53" "1.0.0.1@53"];
+            name = ".";
+            forward-addr = ["1.1.1.1@53" "1.0.0.1@53"];
           }
-          ];
+        ];
         server = {
-          interface = [ "127.0.0.1" "10.100.0.1" ];
+          interface = ["127.0.0.1" "10.100.0.1"];
           access-control = [
-              "127.0.0.1/32 allow"
-                  "10.100.0.0/24 allow"
+            "127.0.0.1/32 allow"
+            "10.100.0.0/24 allow"
           ];
           port = 5335;
           do-ip4 = "yes";
@@ -38,10 +40,8 @@ in
           prefetch-key = "yes";
           msg-cache-size = "50m";
           rrset-cache-size = "100m";
-
         };
       };
     };
   };
 }
-

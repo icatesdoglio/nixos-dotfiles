@@ -1,9 +1,12 @@
-{ config, lib, pkgs, ... }:
-
-let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   cfg = config.my.networking.policyRouting;
 
-  ruleType = lib.types.submodule ({ ... }: {
+  ruleType = lib.types.submodule ({...}: {
     options = {
       priority = lib.mkOption {
         type = lib.types.int;
@@ -47,25 +50,31 @@ let
 
   mkRuleCmd = rule: let
     base = "${pkgs.iproute2}/bin/ip rule add priority ${toString rule.priority}";
-    match =
-      lib.concatStringsSep " " (lib.filter (s: s != "") [
-        (if rule.to != null then "to ${rule.to}" else "")
-        (if rule.iif != null then "iif ${rule.iif}" else "")
-        (if rule.uid != null then "uidrange ${rule.uid}-${rule.uid}" else "")
-      ]);
+    match = lib.concatStringsSep " " (lib.filter (s: s != "") [
+      (
+        if rule.to != null
+        then "to ${rule.to}"
+        else ""
+      )
+      (
+        if rule.iif != null
+        then "iif ${rule.iif}"
+        else ""
+      )
+      (
+        if rule.uid != null
+        then "uidrange ${rule.uid}-${rule.uid}"
+        else ""
+      )
+    ]);
     action =
-      if rule.blackhole then
-        "blackhole"
-      else
-        "lookup ${toString rule.table}";
-  in
-    "${base} ${match} ${action}";
+      if rule.blackhole
+      then "blackhole"
+      else "lookup ${toString rule.table}";
+  in "${base} ${match} ${action}";
 
-  mkDelCmd = rule:
-    "${pkgs.iproute2}/bin/ip rule del priority ${toString rule.priority} 2>/dev/null || true";
-
-in
-{
+  mkDelCmd = rule: "${pkgs.iproute2}/bin/ip rule del priority ${toString rule.priority} 2>/dev/null || true";
+in {
   options.my.networking.policyRouting = {
     enable = lib.mkEnableOption "custom policy routing rules";
 
@@ -79,8 +88,8 @@ in
   config = lib.mkIf cfg.enable {
     systemd.services.policy-routing = {
       description = "Apply policy routing rules";
-      wantedBy = [ "network-online.target" ];
-      after = [ "network-online.target" ];
+      wantedBy = ["network-online.target"];
+      after = ["network-online.target"];
 
       serviceConfig = {
         Type = "oneshot";
@@ -98,4 +107,3 @@ in
     };
   };
 }
-

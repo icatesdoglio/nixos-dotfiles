@@ -1,9 +1,11 @@
-{ lib, config, pkgs, ... }:
-
-let
-  cfg = config.my.hardware.nvidia;
-in
 {
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
+  cfg = config.my.hardware.nvidia;
+in {
   options.my.hardware.nvidia = {
     enable = lib.mkEnableOption "NVIDIA graphics stack";
   };
@@ -45,7 +47,6 @@ in
     ];
 
     users.users.ian.extraGroups =
-      lib.mkAfter [ "video" ];
+      lib.mkAfter ["video"];
   };
 }
-

@@ -1,6 +1,8 @@
-{ lib, config, ... }:
-
-let
+{
+  lib,
+  config,
+  ...
+}: let
   cfg = config.my.services.cloudflared;
 in {
   options.my.services.cloudflared = {
@@ -33,4 +35,3 @@ in {
     };
   };
 }
-

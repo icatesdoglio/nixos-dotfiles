@@ -1,7 +1,10 @@
-{ config, lib, pkgs, ... }:
-
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 lib.mkIf (config.my.host.platform == "raspberry-pi") {
-
   ##########################################################################
   # Safety
   ##########################################################################
@@ -44,4 +47,3 @@ lib.mkIf (config.my.host.platform == "raspberry-pi") {
     memoryPercent = 50;
   };
 }
-
