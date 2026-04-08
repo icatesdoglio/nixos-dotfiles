@@ -166,15 +166,16 @@
   my.networking.pihole = {
     enable = true;
     hostIP = "10.100.0.1";
-
-    dnsReservations =
-      (lib.mapAttrs' (name: h: lib.nameValuePair "home.${name}.wg" h.wgIP)
-        (lib.filterAttrs (_: h: h ? wgIP) hostRegistry))
-      // (lib.mapAttrs' (name: h: lib.nameValuePair "home.${name}.lan" h.lanIP)
-        (lib.filterAttrs (_: h: h ? lanIP) hostRegistry));
-
     wildcardDomains = ["servemato.lan"];
   };
+
+  # Host records derived from registry — dnsmasq reads /etc/hosts natively,
+  # giving both A and PTR records. Names with dots are served as-is (no expand-hosts).
+  networking.hosts =
+    (lib.mapAttrs' (name: h: lib.nameValuePair h.wgIP ["${name}.wg"])
+      (lib.filterAttrs (_: h: h ? wgIP) hostRegistry))
+    // (lib.mapAttrs' (name: h: lib.nameValuePair h.lanIP ["${name}.lan"])
+      (lib.filterAttrs (_: h: h ? lanIP) hostRegistry));
   services.caddy = {
     enable = true;
 

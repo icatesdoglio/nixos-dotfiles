@@ -7,7 +7,7 @@
   cfg = config.my.networking.pihole;
   dnsReservationLines =
     lib.mapAttrsToList
-    (name: ip: "address=/${name}/${ip}")
+    (name: ip: "host-record=${name},${ip}")
     cfg.dnsReservations;
 
   wildcardLines =
@@ -74,7 +74,7 @@ in {
       settings = {
         dns = {
           interface = ["eth0" "wg0" "lo"];
-          listeningMode = "local"; # or "local" / "all"
+          listeningMode = "bind";
           upstreams = ["127.0.0.1#5335"];
 
           domainNeeded = true;
@@ -87,7 +87,6 @@ in {
 
         misc.dnsmasq_lines =
           [
-            "bind-interfaces"
             "expand-hosts"
             "domain-needed"
             "bogus-priv"
