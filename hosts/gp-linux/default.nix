@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  hostRegistry,
   ...
 }: {
   imports = [
@@ -61,8 +62,8 @@
           persistentKeepalive = 25;
         };
         framework = {
-            publicKey = "8A7L4okGuJSPtHIHxVNcTT18iGKr50Ipz18G9LAQKgE=";
-            allowedIPs = ["10.100.0.6/32"];
+          publicKey = hostRegistry.framework.wgPublicKey;
+          allowedIPs = ["${hostRegistry.framework.wgIP}/32"];
         };
       };
     };

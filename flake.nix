@@ -121,6 +121,7 @@
         specialArgs =
           {
             inherit inputs legacy nixpkgs confdev suckless;
+            hostRegistry = import ./hosts/registry.nix;
           }
           // extraHMArgs;
 
@@ -185,7 +186,7 @@
       */
       ServeMato = nixos-raspberrypi.lib.nixosSystem {
         system = "aarch64-linux";
-        specialArgs = inputs;
+        specialArgs = inputs // {hostRegistry = import ./hosts/registry.nix;};
 
         modules = [
           ({...}: {

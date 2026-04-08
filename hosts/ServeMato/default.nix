@@ -1,6 +1,8 @@
 {
+  lib,
   pkgs,
   config,
+  hostRegistry,
   ...
 }: {
   imports = [
@@ -165,16 +167,11 @@
     enable = true;
     hostIP = "10.100.0.1";
 
-    dnsReservations = {
-      "home.servemato.wg" = "10.100.0.1";
-      "home.servemato.lan" = "192.168.0.30";
-      "home.framework.wg" = "10.100.0.6";
-      "home.framework.lan" = "192.168.0.42";
-      "home.gp-linux.lan" = "192.168.0.20";
-      "home.gp-linux.wg" = "10.100.0.2";
-      "home.mini-mine.wg" = "10.100.0.3";
-      "home.mini-mine.lan" = "192.168.0.40";
-    };
+    dnsReservations =
+      (lib.mapAttrs' (name: h: lib.nameValuePair "home.${name}.wg" h.wgIP)
+        (lib.filterAttrs (_: h: h ? wgIP) hostRegistry))
+      // (lib.mapAttrs' (name: h: lib.nameValuePair "home.${name}.lan" h.lanIP)
+        (lib.filterAttrs (_: h: h ? lanIP) hostRegistry));
 
     wildcardDomains = ["servemato.lan"];
   };
@@ -241,35 +238,10 @@
       privateKeyFile = config.sops.secrets."wg/lan/servemato".path;
       address = "10.100.0.1/24";
 
-      peers = {
-        desktop = {
-          publicKey = "E3J+BJ2f+6VyLY8JB7ypzSOXdQsB66T/nr7mdcP4yxc=";
-          allowedIPs = ["10.100.0.2/32"];
-        };
-
-        macmini = {
-          publicKey = "GXxa4bsYmIeLdvnznaNiX8kzOwfjoRCJTMG3uUrFCXk=";
-          allowedIPs = ["10.100.0.3/32"];
-        };
-
-        iphone = {
-          publicKey = "hlZRXkdEdoHLpigkr3cP23X2qu89tf1Lj3hUbeMtGAw=";
-          allowedIPs = ["10.100.0.4/32"];
-        };
-
-        archlaptop = {
-          publicKey = "mx/c3oFZwTQ824bA4kXPyr+CU0qVLO28imgENyEZgUU=";
-          allowedIPs = ["10.100.0.5/32"];
-        };
-        framework = {
-          publicKey = "8A7L4okGuJSPtHIHxVNcTT18iGKr50Ipz18G9LAQKgE=";
-          allowedIPs = ["10.100.0.6/32"];
-        };
-        pepper = {
-          publicKey = "MH26xzZZKjtGK5gCJcfgh1T1RQ0rLqH3JThwOFi07Rs=";
-          allowedIPs = ["10.100.0.7/32"];
-        };
-      };
+      peers = lib.mapAttrs (_: h: {
+        publicKey = h.wgPublicKey;
+        allowedIPs = ["${h.wgIP}/32"];
+      }) (lib.filterAttrs (name: _: name != "servemato") hostRegistry);
       postSetup = ''
         ${pkgs.iproute2}/bin/ip rule add \
         to 10.100.0.0/24 \
