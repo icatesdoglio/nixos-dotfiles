@@ -132,5 +132,22 @@
     ];
   };
 
-  system.stateVersion = "26.05";
+    programs.nix-ld = {
+        enable = true;
+        libraries = with pkgs; [
+            gtk2
+                glib
+                libX11
+                libXext
+                libXrender
+                libXtst
+                libXrandr
+                libXcursor
+                libXinerama
+                pango
+                cairo
+                gdk-pixbuf
+        ];
+    };
+    system.stateVersion = "26.05";
 }
