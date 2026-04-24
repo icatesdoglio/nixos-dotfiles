@@ -1,5 +1,9 @@
 #!/bin/sh
+
 tmpfile=$(mktemp /tmp/screenshot-XXXX.png)
-slurp_result=$(slurp) || exit 1
-grim -g "$slurp_result" "$tmpfile" && wl-copy < "$tmpfile"
+
+region=$(slurp -b 00000000 -s 00000000) || exit 1
+
+grim -g "$region" - | wl-copy
+
 rm -f "$tmpfile"

@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  hostRegistry,
   ...
 }: {
   imports = [
@@ -64,6 +65,12 @@
           allowedIPs = ["10.100.0.0/24"];
           persistentKeepalive = 25;
         };
+        # gp-linux = {
+        #   # Servemato LAN hub
+        #   publicKey = "E3J+BJ2f+6VyLY8JB7ypzSOXdQsB66T/nr7mdcP4yxc=";
+        #   allowedIPs = ["10.100.0.2/32"];
+        #   persistentKeepalive = 25;
+        # };
       };
     };
   };
@@ -103,7 +110,7 @@
 
   my.networking.ipv6.method = "ignore";
   networking.nat.enable = true;
-  networking.nat.externalInterface = "wlp191s0";
+  networking.nat.externalInterface = "wlan0";
 
   # MT7925 (WiFi 7): disable ASPM to prevent PCIe power-state freeze,
   # disable CLC to suppress 6 GHz regulatory failures that cause roaming loop
@@ -121,8 +128,8 @@
     connection = {
       id = "home-static";
       type = "wifi";
-      interface-name = "wlp191s0";
-      autoconnect = false;
+      interface-name = "wlan0";
+      autoconnect = true;
       autoconnect-priority = 50;
     };
 
@@ -140,6 +147,40 @@
     };
     ipv6.method = "ignore";
   };
+
+  # When on home WiFi, connect directly to ServeMato's LAN IP to avoid hairpin NAT.
+  # On all other networks, use the public hostname.
+  networking.networkmanager.dispatcherScripts = [
+    {
+      type = "basic";
+      source = pkgs.writeShellScript "wg0-endpoint-switch" ''
+        IFACE="$1"
+        ACTION="$2"
+
+        [ "$IFACE" = "wlan0" ] || exit 0
+
+        SERVEMATO_KEY="${hostRegistry.servemato.wgPublicKey}"
+
+        case "$ACTION" in
+          up)
+            SSID=$(${pkgs.networkmanager}/bin/nmcli -g 802-11-wireless.ssid \
+              connection show "$CONNECTION_UUID" 2>/dev/null)
+            if [ "$SSID" = "Tomato Info" ]; then
+              ${pkgs.wireguard-tools}/bin/wg set wg0 peer "$SERVEMATO_KEY" \
+                endpoint "${hostRegistry.servemato.lanIP}:51820"
+            else
+              ${pkgs.wireguard-tools}/bin/wg set wg0 peer "$SERVEMATO_KEY" \
+                endpoint "home.iancd.net:51820"
+            fi
+            ;;
+          down)
+            ${pkgs.wireguard-tools}/bin/wg set wg0 peer "$SERVEMATO_KEY" \
+              endpoint "home.iancd.net:51820"
+            ;;
+        esac
+      '';
+    }
+  ];
 
   services.resolved.enable = false;
 
