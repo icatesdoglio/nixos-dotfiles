@@ -88,14 +88,15 @@ in {
       ++ lib.optionals cfg.dev.enable (with pkgs; [
         uv
         python313
+        ruff
         pyright
         rustup
         nodejs
         lua-language-server
         claude-code
         databricks-cli
+        terraform
         slack
-        # zoom-us
       ])
       #################################
       # C / C++

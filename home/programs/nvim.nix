@@ -32,6 +32,7 @@ in {
         blink-cmp
         blink-cmp-conventional-commits
         oil-nvim
+        harpoon2
         friendly-snippets
         vim-fugitive
       ];

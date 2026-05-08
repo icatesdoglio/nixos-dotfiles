@@ -151,6 +151,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
   end,
 })
 
+vim.api.nvim_set_hl(0, "StatusLine", {
+  fg = "#ffffff",
+  bg = "#005f87",
+  bold = true,
+})
+
 local blink = require("blink.cmp")
 
 blink.setup({
@@ -195,4 +201,35 @@ vim.keymap.set("n", "<leader>sw", ts.grep_string)
 vim.keymap.set("n", "<leader>sr", ts.resume)
 
 
+local ok, harpoon = pcall(require, "harpoon")
+if not ok then
+	return
+end
 
+harpoon:setup()
+
+local function map(lhs, rhs, desc)
+	vim.keymap.set("n", lhs, rhs, { desc = desc })
+end
+
+map("<leader>ha", function()
+	harpoon:list():add()
+end, "[H]arpoon [A]dd")
+
+map("<leader>hm", function()
+	harpoon.ui:toggle_quick_menu(harpoon:list())
+end, "[H]arpoon [M]enu")
+
+local harpoon_keys = {
+	{ lhs = "<leader>hs", index = 1, desc = "[H]arpoon to [1]" },
+	{ lhs = "<leader>hd", index = 2, desc = "[H]arpoon to [2]" },
+	{ lhs = "<leader>hf", index = 3, desc = "[H]arpoon to [3]" },
+	{ lhs = "<leader>hg", index = 4, desc = "[H]arpoon to [4]" },
+	{ lhs = "<leader>hh", index = 5, desc = "[H]arpoon to [5]" },
+}
+
+for _, item in ipairs(harpoon_keys) do
+	map(item.lhs, function()
+		harpoon:list():select(item.index)
+	end, item.desc)
+end

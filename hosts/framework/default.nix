@@ -247,6 +247,21 @@
     ];
   };
 
+  services.flatpak.enable = true;
+
+  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+
+    xdg.portal = {
+      enable = true;
+
+      config.common.default = "hyprland";
+
+      extraPortals = with pkgs; [
+        xdg-desktop-portal-hyprland
+        xdg-desktop-portal-gtk
+      ];
+    };
+
   # services.caddy.enable = true;
 
   system.stateVersion = "26.05";
