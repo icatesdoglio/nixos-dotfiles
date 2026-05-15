@@ -13,6 +13,7 @@ in {
     services.pipewire = {
       enable = true;
       pulse.enable = true;
+      wireplumber.enable = true;
     };
 
     users.users.ian.extraGroups =

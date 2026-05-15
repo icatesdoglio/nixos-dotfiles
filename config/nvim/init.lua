@@ -69,6 +69,7 @@ if not on_nixos then
             version = vim.version.range("1.*"),
         },
         -- "https://github.com/nvim-treestter/nvim-treesitter",
+        "https://github.com/jpalardy/vim-slime",
     })
 end
 
@@ -124,7 +125,13 @@ vim.lsp.config("pyright", {
     },
   },
 })
+
+vim.lsp.config("ruff", {
+  cmd = { "ruff", "server" },
+})
+
 vim.lsp.enable("pyright")
+vim.lsp.enable("ruff")
 vim.lsp.enable("rust_analyzer")
 -- vim.lsp.config("rust_analyzer", {
 --     settings = {}
@@ -208,6 +215,101 @@ end
 
 harpoon:setup()
 
+vim.api.nvim_set_hl(0, "HarpoonOuterBorder", { fg = "#808080" }) -- grey
+vim.api.nvim_set_hl(0, "HarpoonInnerBorder", { fg = "#ff5555" }) -- red
+vim.api.nvim_set_hl(0, "HarpoonMenuTitle", { fg = "#ff5555", bold = true })
+
+local function close_win(win)
+	if win and vim.api.nvim_win_is_valid(win) then
+		vim.api.nvim_win_close(win, true)
+	end
+end
+
+local function open_harpoon_menu()
+	local list = harpoon:list()
+	local items = list.items or {}
+
+	local lines = {}
+
+	for i, item in ipairs(items) do
+		local value = item.value or tostring(item)
+		local filename = vim.fn.fnamemodify(value, ":~:.")
+		table.insert(lines, string.format(" %d  %s ", i, filename))
+	end
+
+	-- Open an empty menu instead of notifying/logging.
+	if #lines == 0 then
+		lines = { "" }
+	end
+
+	local width = 0
+	for _, line in ipairs(lines) do
+		width = math.max(width, vim.fn.strdisplaywidth(line))
+	end
+
+	width = math.max(width, 32)
+	local height = #lines
+
+    local function relative_position(width, height, row_pct, col_pct)
+        local editor_width = vim.o.columns
+        local editor_height = vim.o.lines
+
+        local row = math.floor((editor_height - height) * row_pct)
+        local col = math.floor((editor_width - width) * col_pct)
+
+        return row, col
+    end
+
+    local row, col = relative_position(width, height, 0.4, 0.5)
+
+	local buf = vim.api.nvim_create_buf(false, true)
+
+	local win = vim.api.nvim_open_win(buf, true, {
+		relative = "editor",
+		row = row,
+		col = col,
+		width = width,
+		height = height,
+		style = "minimal",
+		border = "rounded",
+		title = " Harpoon ",
+		title_pos = "center",
+		zindex = 50,
+	})
+
+	vim.wo[win].winhighlight = table.concat({
+		"FloatBorder:HarpoonInnerBorder",
+		"FloatTitle:HarpoonMenuTitle",
+		"NormalFloat:Normal",
+	}, ",")
+
+	local function close_menu()
+		if vim.api.nvim_win_is_valid(win) then
+			vim.api.nvim_win_close(win, true)
+		end
+	end
+
+	vim.keymap.set("n", "q", close_menu, { buffer = buf, nowait = true })
+	vim.keymap.set("n", "<Esc>", close_menu, { buffer = buf, nowait = true })
+
+	vim.keymap.set("n", "<CR>", function()
+		if #items == 0 then
+			return
+		end
+
+		local selected = vim.api.nvim_win_get_cursor(win)[1]
+		close_menu()
+		list:select(selected)
+	end, { buffer = buf, nowait = true })
+
+	for i = 1, math.min(#items, 9) do
+		vim.keymap.set("n", tostring(i), function()
+			close_menu()
+			list:select(i)
+		end, { buffer = buf, nowait = true })
+	end
+end
+
 local function map(lhs, rhs, desc)
 	vim.keymap.set("n", lhs, rhs, { desc = desc })
 end
@@ -216,20 +318,33 @@ map("<leader>ha", function()
 	harpoon:list():add()
 end, "[H]arpoon [A]dd")
 
-map("<leader>hm", function()
-	harpoon.ui:toggle_quick_menu(harpoon:list())
-end, "[H]arpoon [M]enu")
+map("<leader>hm", open_harpoon_menu, "[H]arpoon [M]enu")
 
 local harpoon_keys = {
-	{ lhs = "<leader>hs", index = 1, desc = "[H]arpoon to [1]" },
-	{ lhs = "<leader>hd", index = 2, desc = "[H]arpoon to [2]" },
-	{ lhs = "<leader>hf", index = 3, desc = "[H]arpoon to [3]" },
-	{ lhs = "<leader>hg", index = 4, desc = "[H]arpoon to [4]" },
-	{ lhs = "<leader>hh", index = 5, desc = "[H]arpoon to [5]" },
+	{ lhs = "<leader>hs", index = 1 },
+	{ lhs = "<leader>hd", index = 2 },
+	{ lhs = "<leader>hf", index = 3 },
+	{ lhs = "<leader>hg", index = 4 },
+	{ lhs = "<leader>hh", index = 5 },
 }
 
 for _, item in ipairs(harpoon_keys) do
 	map(item.lhs, function()
 		harpoon:list():select(item.index)
-	end, item.desc)
+	end, "[H]arpoon to [" .. item.index .. "]")
 end
+
+-- REPL (vim-slime → tmux session "repl")
+-- Usage: in Terminal 2 run: tmux new-session -s repl, then ipython
+vim.g.slime_target = "tmux"
+vim.g.slime_default_config = { socket_name = "default", target_pane = "repl:0.0" }
+vim.g.slime_dont_ask_default = 1
+vim.g.slime_bracketed_paste = 1  -- wraps in bracketed paste escape sequences so IPython accepts indented blocks
+
+vim.keymap.set("n", "<C-CR>", "<Plug>SlimeLineSend", { desc = "Send line to REPL" })
+vim.keymap.set("x", "<C-CR>", "<Plug>SlimeRegionSend", { desc = "Send selection to REPL" })
+
+vim.keymap.set("n", "<leader>r", function()
+    local f = vim.fn.expand("%:p")
+    vim.fn.system("tmux send-keys -t repl:0.0 '%run " .. f .. "' Enter")
+end, { desc = "[R]un file in REPL" })

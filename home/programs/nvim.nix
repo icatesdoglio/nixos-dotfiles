@@ -35,6 +35,7 @@ in {
         harpoon2
         friendly-snippets
         vim-fugitive
+        vim-slime
       ];
 
       viAlias = true;

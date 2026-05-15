@@ -18,6 +18,8 @@ in {
     home.packages = with pkgs; [
       git
       gh
+      github-copilot-cli
+      codex
       delta
     ];
 
