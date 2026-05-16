@@ -219,7 +219,7 @@
   /*
   TODO: Bug in nvidia code somewhere gets auto enabled
   */
-  services.xserver.videoDrivers = lib.mkForce ["amdgpu"];
+  services.xserver.videoDrivers = ["amdgpu"];
 
   /*
   Desktop configurations
@@ -250,17 +250,6 @@
   services.flatpak.enable = true;
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
-
-    xdg.portal = {
-      enable = true;
-
-      config.common.default = "hyprland";
-
-      extraPortals = with pkgs; [
-        xdg-desktop-portal-hyprland
-        xdg-desktop-portal-gtk
-      ];
-    };
 
   # services.caddy.enable = true;
 

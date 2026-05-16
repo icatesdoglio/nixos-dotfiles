@@ -24,6 +24,7 @@ in {
         shellcheck
         alejandra
         pyright
+        lua-language-server
       ];
       plugins = with pkgs.vimPlugins; [
         nvim-treesitter
