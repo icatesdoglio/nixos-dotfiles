@@ -12,11 +12,6 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # Ensure XDG_CURRENT_DESKTOP is in the systemd user environment before
-    # xdg-desktop-portal activates, so Flatpak apps (e.g. Zoom) get routed
-    # to xdg-desktop-portal-hyprland for screensharing reliably.
-    systemd.user.sessionVariables.XDG_CURRENT_DESKTOP = "Hyprland";
-
     programs.hyprland = {
       enable = true;
       xwayland.enable = true;
