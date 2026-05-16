@@ -219,7 +219,7 @@
   /*
   TODO: Bug in nvidia code somewhere gets auto enabled
   */
-  services.xserver.videoDrivers = lib.mkForce ["amdgpu"];
+  services.xserver.videoDrivers = ["amdgpu"];
 
   /*
   Desktop configurations

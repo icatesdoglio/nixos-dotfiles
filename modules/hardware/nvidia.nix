@@ -13,6 +13,8 @@ in {
   config = lib.mkIf cfg.enable {
     nixpkgs.config.allowUnfree = true;
 
+    services.xserver.videoDrivers = ["nvidia"];
+
     hardware.graphics.enable = true;
 
     boot.initrd.kernelModules = [
