@@ -11,6 +11,9 @@ local menu        = "~/.config/hypr/scripts/bemenu-custom-run"
 
 -- AUTOSTART
 hl.on("hyprland.start", function()
+    -- Propagate Wayland env to systemd/dbus so xdg-desktop-portal-hyprland
+    -- has WAYLAND_DISPLAY when it activates (fixes intermittent screenshare)
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("waybar")
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("swaync")
