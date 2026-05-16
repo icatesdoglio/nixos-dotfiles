@@ -1,9 +1,13 @@
-{ lib, config, pkgs, legacy, confdev, ... }:
-
-let
-  cfg = config.my.hm.packages;
-in
 {
+  lib,
+  config,
+  pkgs,
+  legacy,
+  confdev,
+  ...
+}: let
+  cfg = config.my.hm.packages;
+in {
   #################################
   # Options
   #################################
@@ -41,6 +45,12 @@ in
       description = "R environment";
     };
 
+    bluetooth.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Bluetui mostly";
+    };
+
     custom.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -53,42 +63,63 @@ in
   #################################
 
   config = lib.mkIf cfg.enable {
-
     home.packages =
       #################################
       # CLI
       #################################
       lib.optionals cfg.cli.enable (with pkgs; [
-        ripgrep fd jq tree htop wget curl tmux
-        zoxide starship sops
+        ripgrep
+        fd
+        jq
+        tree
+        htop
+        wget
+        curl
+        tmux
+        zoxide
+        starship
+        sops
+        yazi
+        fzf
       ])
-
       #################################
       # Dev
       #################################
       ++ lib.optionals cfg.dev.enable (with pkgs; [
-        uv python313 pyright
+        uv
+        python313
+        ruff
+        pyright
         rustup
         nodejs
         lua-language-server
+        claude-code
+        databricks-cli
+        terraform
+        slack
       ])
-
       #################################
       # C / C++
       #################################
       ++ lib.optionals cfg.cpp.enable (with pkgs; [
-        gcc gnumake cmake ninja
+        gcc
+        gnumake
+        cmake
+        ninja
         clang-tools
-        pkg-config gdb unzip
+        pkg-config
+        gdb
+        unzip
       ])
-
       #################################
       # Nix
       #################################
       ++ lib.optionals cfg.nix.enable (with pkgs; [
-        nixd alejandra statix deadnix
+        nixd
+        alejandra
+        statix
+        deadnix
       ])
-
       #################################
       # R
       #################################
@@ -97,15 +128,21 @@ in
         (pkgs.writeShellScriptBin "R42" ''
           exec ${legacy.rWrapper}/bin/R "$@"
         '')
-      ];
-
-      /** #################################
-      # Custom
+      ]
       #################################
-      ++ lib.optionals cfg.custom.enable [
-        (confdev.packages.${pkgs.system}.default)
-      ];
-      */
+      # bluetooth
+      #################################
+      ++ lib.optionals cfg.bluetooth.enable (with pkgs; [
+        bluetui
+      ]);
+
+    /**
+       #################################
+    # Custom
+    #################################
+    ++ lib.optionals cfg.custom.enable [
+      (confdev.packages.${pkgs.system}.default)
+    ];
+    */
   };
 }
-

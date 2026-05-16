@@ -1,9 +1,10 @@
-{ lib, config, ... }:
-
-let
-  cfg = config.my.wireguard.server;
-in
 {
+  lib,
+  config,
+  ...
+}: let
+  cfg = config.my.wireguard.server;
+in {
   options.my.wireguard.server = {
     enable = lib.mkEnableOption "WireGuard server";
 
@@ -30,14 +31,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    networking.firewall.allowedUDPPorts = [ cfg.listenPort ];
+    networking.firewall.allowedUDPPorts = [cfg.listenPort];
 
     networking.wireguard.interfaces.wg0 = {
-      ips = [ cfg.address ];
+      ips = [cfg.address];
       listenPort = cfg.listenPort;
       privateKeyFile = "/etc/wireguard/server.key";
       peers = cfg.peers;
     };
   };
 }
-

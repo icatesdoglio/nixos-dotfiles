@@ -1,6 +1,9 @@
-{ lib, config, pkgs, ... }:
-
-let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   inherit (lib) mkEnableOption mkIf mkMerge mkOption types;
 
   cfg = config.my.desktop;
@@ -9,17 +12,15 @@ let
   # make sure to register new desktops with the correct environment
   anyWaylandEnabled = cfg.hyprland.enable || cfg.river.enable || cfg.plasma.enable;
   anyX11Enabled = cfg.dwm.enable;
-
-in
-{
-    imports = [
-        ./fonts.nix
-        ./audio.nix
-        ./hyprland.nix
-        ./dwm.nix
-        ./river.nix
-        ./plasma.nix
-    ];
+in {
+  imports = [
+    ./fonts.nix
+    ./audio.nix
+    ./hyprland.nix
+    ./dwm.nix
+    ./river.nix
+    ./plasma.nix
+  ];
   options.my.desktop = {
     enable = mkOption {
       type = types.bool;
@@ -28,16 +29,13 @@ in
     };
 
     useDisplayManager = mkOption {
-        type = types.bool;
-        default = false;
-        description = "Whether to use a display manager (GDM/SDDM/etc)";
+      type = types.bool;
+      default = false;
+      description = "Whether to use a display manager (GDM/SDDM/etc)";
     };
-
-
   };
 
   config = mkMerge [
-
     # Shared desktop defaults
     (mkIf cfg.enable {
       my.desktop.audio.enable = true;
@@ -49,7 +47,15 @@ in
       xdg.portal.enable = true;
       xdg.portal.extraPortals = with pkgs; [
         xdg-desktop-portal-gtk
+        xdg-desktop-portal-hyprland
+        xdg-desktop-portal-wlr
       ];
+
+      xdg.portal.config = {
+        common.default = "hyprland";
+        hyprland.default = "hyprland";
+        river.default = "wlr";
+      };
 
       environment.systemPackages = with pkgs; [
         wl-clipboard

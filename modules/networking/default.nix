@@ -6,6 +6,6 @@
     ./static-ip.nix
     ./pi-hole.nix
     ./unbound.nix
+    ./policy-routing.nix
   ];
 }
-

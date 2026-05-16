@@ -69,6 +69,7 @@ if not on_nixos then
             version = vim.version.range("1.*"),
         },
         -- "https://github.com/nvim-treestter/nvim-treesitter",
+        "https://github.com/jpalardy/vim-slime",
     })
 end
 
@@ -94,38 +95,102 @@ end)
 
 
 -- LSP CONFIGURATION
-vim.lsp.enable("lua_ls")
 vim.lsp.config("lua_ls", {
+  cmd = { "lua-language-server" },
+  filetypes = { "lua" },
+  root_dir = vim.fn.getcwd(),
   settings = {
     Lua = {
       runtime = { version = "LuaJIT" },
-      diagnostics = {
-        globals = { "vim" },
-      },
+      diagnostics = { globals = { "vim" } },
       workspace = {
-          library = vim.api.nvim_get_runtime_file("", true),
-          checkThirdParty = false,
-      }
+        library = vim.api.nvim_get_runtime_file("", true),
+        checkThirdParty = false,
+      },
+    },
+  },
+})
+vim.lsp.enable("lua_ls")
+
+vim.lsp.config("pyright", {
+  cmd = { "pyright-langserver", "--stdio" },
+  filetypes = { "python" },
+  root_markers = { "pyproject.toml", "setup.py", "setup.cfg", ".git" },
+  settings = {
+    python = {
+      analysis = {
+        autoSearchPaths = true,
+        useLibraryCodeForTypes = true,
+      },
     },
   },
 })
 
+vim.lsp.config("ruff", {
+  cmd = { "ruff", "server" },
+})
+
+vim.keymap.set("n", "<leader>rf", function()
+    local root = vim.fs.root(0, { "pyproject.toml", "setup.py", ".git" })
+    if not root then
+        vim.notify("ruff: no project root found", vim.log.levels.WARN)
+        return
+    end
+    local cd = "cd " .. vim.fn.shellescape(root) .. " && "
+    vim.fn.system(cd .. "ruff format .")
+    local output = vim.fn.systemlist(cd .. "ruff check --output-format concise .")
+    local items = {}
+    for _, line in ipairs(output) do
+        local file, lnum, col, msg = line:match("^(.+):(%d+):(%d+): (.+)$")
+        if file then
+            table.insert(items, {
+                filename = vim.fs.joinpath(root, file),
+                lnum = tonumber(lnum),
+                col = tonumber(col),
+                text = msg,
+            })
+        end
+    end
+    vim.fn.setqflist(items, "r")
+    if #items > 0 then
+        vim.cmd("copen")
+    else
+        vim.notify("ruff: all clear", vim.log.levels.INFO)
+    end
+end, { desc = "[R]uff [F]ormat + check → quickfix" })
+
 vim.lsp.enable("pyright")
+vim.lsp.enable("ruff")
 vim.lsp.enable("rust_analyzer")
 -- vim.lsp.config("rust_analyzer", {
 --     settings = {}
 -- })
 --
-vim.lsp.enable("nixd")
 vim.lsp.config("nixd", {
-    settings = {
-        nixpkgs = {
-            expr = "import <nixpkgs> {}",
-        },
-        formatting = {
-            command = { "alejandra" },
-        },
+  cmd = { "nixd" },
+  filetypes = { "nix" },
+  root_dir = vim.fn.getcwd(),
+  settings = {
+    nixpkgs = {
+      expr = "import <nixpkgs> {}",
     },
+    formatting = {
+      command = { "alejandra" },
+    },
+  },
+})
+vim.lsp.enable("nixd")
+
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function(args)
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, { buffer = args.buf })
+  end,
+})
+
+vim.api.nvim_set_hl(0, "StatusLine", {
+  fg = "#ffffff",
+  bg = "#005f87",
+  bold = true,
 })
 
 local blink = require("blink.cmp")
@@ -143,6 +208,7 @@ blink.setup({
     fuzzy = { implementation = "prefer_rust_with_warning" }
 
 })
+
 
 
 
@@ -171,4 +237,143 @@ vim.keymap.set("n", "<leader>sw", ts.grep_string)
 vim.keymap.set("n", "<leader>sr", ts.resume)
 
 
+local ok, harpoon = pcall(require, "harpoon")
+if not ok then
+	return
+end
 
+harpoon:setup()
+
+vim.api.nvim_set_hl(0, "HarpoonOuterBorder", { fg = "#808080" }) -- grey
+vim.api.nvim_set_hl(0, "HarpoonInnerBorder", { fg = "#ff5555" }) -- red
+vim.api.nvim_set_hl(0, "HarpoonMenuTitle", { fg = "#ff5555", bold = true })
+
+local function close_win(win)
+	if win and vim.api.nvim_win_is_valid(win) then
+		vim.api.nvim_win_close(win, true)
+	end
+end
+
+local function open_harpoon_menu()
+	local list = harpoon:list()
+	local items = list.items or {}
+
+	local lines = {}
+
+	for i, item in ipairs(items) do
+		local value = item.value or tostring(item)
+		local filename = vim.fn.fnamemodify(value, ":~:.")
+		table.insert(lines, string.format(" %d  %s ", i, filename))
+	end
+
+	-- Open an empty menu instead of notifying/logging.
+	if #lines == 0 then
+		lines = { "" }
+	end
+
+	local width = 0
+	for _, line in ipairs(lines) do
+		width = math.max(width, vim.fn.strdisplaywidth(line))
+	end
+
+	width = math.max(width, 32)
+	local height = #lines
+
+    local function relative_position(width, height, row_pct, col_pct)
+        local editor_width = vim.o.columns
+        local editor_height = vim.o.lines
+
+        local row = math.floor((editor_height - height) * row_pct)
+        local col = math.floor((editor_width - width) * col_pct)
+
+        return row, col
+    end
+
+    local row, col = relative_position(width, height, 0.4, 0.5)
+
+	local buf = vim.api.nvim_create_buf(false, true)
+
+	local win = vim.api.nvim_open_win(buf, true, {
+		relative = "editor",
+		row = row,
+		col = col,
+		width = width,
+		height = height,
+		style = "minimal",
+		border = "rounded",
+		title = " Harpoon ",
+		title_pos = "center",
+		zindex = 50,
+	})
+
+	vim.wo[win].winhighlight = table.concat({
+		"FloatBorder:HarpoonInnerBorder",
+		"FloatTitle:HarpoonMenuTitle",
+		"NormalFloat:Normal",
+	}, ",")
+
+	local function close_menu()
+		if vim.api.nvim_win_is_valid(win) then
+			vim.api.nvim_win_close(win, true)
+		end
+	end
+
+	vim.keymap.set("n", "q", close_menu, { buffer = buf, nowait = true })
+	vim.keymap.set("n", "<Esc>", close_menu, { buffer = buf, nowait = true })
+
+	vim.keymap.set("n", "<CR>", function()
+		if #items == 0 then
+			return
+		end
+
+		local selected = vim.api.nvim_win_get_cursor(win)[1]
+		close_menu()
+		list:select(selected)
+	end, { buffer = buf, nowait = true })
+
+	for i = 1, math.min(#items, 9) do
+		vim.keymap.set("n", tostring(i), function()
+			close_menu()
+			list:select(i)
+		end, { buffer = buf, nowait = true })
+	end
+end
+
+local function map(lhs, rhs, desc)
+	vim.keymap.set("n", lhs, rhs, { desc = desc })
+end
+
+map("<leader>ha", function()
+	harpoon:list():add()
+end, "[H]arpoon [A]dd")
+
+map("<leader>hm", open_harpoon_menu, "[H]arpoon [M]enu")
+
+local harpoon_keys = {
+	{ lhs = "<leader>hs", index = 1 },
+	{ lhs = "<leader>hd", index = 2 },
+	{ lhs = "<leader>hf", index = 3 },
+	{ lhs = "<leader>hg", index = 4 },
+	{ lhs = "<leader>hh", index = 5 },
+}
+
+for _, item in ipairs(harpoon_keys) do
+	map(item.lhs, function()
+		harpoon:list():select(item.index)
+	end, "[H]arpoon to [" .. item.index .. "]")
+end
+
+-- REPL (vim-slime → tmux session "repl")
+-- Usage: in Terminal 2 run: tmux new-session -s repl, then ipython
+vim.g.slime_target = "tmux"
+vim.g.slime_default_config = { socket_name = "default", target_pane = "repl:0.0" }
+vim.g.slime_dont_ask_default = 1
+vim.g.slime_bracketed_paste = 1  -- wraps in bracketed paste escape sequences so IPython accepts indented blocks
+
+vim.keymap.set("n", "<C-CR>", "<Plug>SlimeLineSend", { desc = "Send line to REPL" })
+vim.keymap.set("x", "<C-CR>", "<Plug>SlimeRegionSend", { desc = "Send selection to REPL" })
+
+vim.keymap.set("n", "<leader>r", function()
+    local f = vim.fn.expand("%:p")
+    vim.fn.system("tmux send-keys -t repl:0.0 '%run " .. f .. "' Enter")
+end, { desc = "[R]un file in REPL" })

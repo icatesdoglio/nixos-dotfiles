@@ -1,10 +1,11 @@
 {
-    imports = [
-        ./nvim.nix
-        ./git.nix
-        ./wezterm.nix
-        ./ssh.nix
-        ./river.nix
-        ./confdev.nix
-    ];
+  imports = [
+    ./nvim.nix
+    ./git.nix
+    ./wezterm.nix
+    ./ssh.nix
+    ./river.nix
+    ./confdev.nix
+    ./bash.nix
+  ];
 }

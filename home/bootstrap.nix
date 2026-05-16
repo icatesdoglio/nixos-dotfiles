@@ -1,6 +1,4 @@
-{ lib, ... }:
-
-{
+{lib, ...}: {
   home = {
     username = lib.mkDefault "ian";
     homeDirectory = lib.mkDefault "/home/ian";
@@ -9,4 +7,3 @@
 
   programs.home-manager.enable = true;
 }
-

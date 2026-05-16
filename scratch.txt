@@ -1,0 +1,5 @@
+  nixos-rebuild boot
+    --flake .#ServeMato
+    --target-host ian@192.168.0.30
+    --sudo --ask-sudo-password --show-trace
+

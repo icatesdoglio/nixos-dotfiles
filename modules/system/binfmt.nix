@@ -1,9 +1,10 @@
-{ lib, config, ... }:
-
-let
-  cfg = config.my.system.binfmt;
-in
 {
+  lib,
+  config,
+  ...
+}: let
+  cfg = config.my.system.binfmt;
+in {
   options.my.system.binfmt = {
     enable = lib.mkEnableOption "binfmt emulation support";
 
@@ -11,14 +12,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-
     systemd.services.systemd-binfmt.enable = true;
 
     boot.binfmt.emulatedSystems =
-      lib.mkIf cfg.emulateAarch64 [ "aarch64-linux" ];
+      lib.mkIf cfg.emulateAarch64 ["aarch64-linux"];
 
     nix.settings = lib.mkIf cfg.emulateAarch64 {
-      extra-platforms = [ "aarch64-linux" ];
+      extra-platforms = ["aarch64-linux"];
 
       substituters = [
         "https://cache.nixos.org"
@@ -38,4 +38,3 @@ in
     ];
   };
 }
-

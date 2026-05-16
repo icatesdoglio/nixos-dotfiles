@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+read used total <<<"$(free -m | awk '/Mem:/ {print $3, $2}')"
+
+used_gib=$(awk "BEGIN { printf \"%.1f\", $used / 1024 }")
+total_gib=$(awk "BEGIN { printf \"%.1f\", $total / 1024 }")
+
+echo " ${used_gib}/${total_gib}G"
+

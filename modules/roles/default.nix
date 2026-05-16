@@ -1,7 +1,7 @@
 {
-    imports = [
-        ./dns.nix
-        ./edge.nix
-        ./server.nix
-    ];
+  imports = [
+    ./dns.nix
+    ./edge.nix
+    ./server.nix
+  ];
 }

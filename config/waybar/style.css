@@ -11,18 +11,54 @@ window#waybar {
   padding: 4px 6px;
 }
 
-#workspaces button,
-#clock,
-#cpu,
-#memory,
-#pulseaudio {
-  padding: 3px 8px;
-  margin: 0 4px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
+#window {
+  margin-left: 15px;
 }
 
+#battery,
+#clock,
+#cpu,
+#custom-mem-cust,
+#custom-network,
+#pulseaudio {
+  padding: 0px 8px;
+  margin: 0px 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1px;
+}
+
+#workspaces button {
+  padding: 0px 1px;
+  margin: 0px 1px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1px;
+}
+
+
 #workspaces button.active {
-  background: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 -4px #c28b2c;
+}
+#battery.charging {
+  color: #9ece6a;
+}
+
+#battery.warning {
+  color: #e0af68;
+}
+
+#battery.critical {
+  color: #f7768e;
+}
+
+#custom-network.no-vpn {
+  color: #c28b2c;
+}
+
+#custom-network.vpn-home {
+  color: #566b84;
+}
+
+#custom-network.vpn-egress {
+  color: #9ece6a;
 }
 

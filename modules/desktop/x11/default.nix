@@ -1,6 +1,9 @@
-{ lib, config, pkgs, ... }:
-
-let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   inherit (lib) mkEnableOption mkIf mkMerge types mkOption;
   cfg = config.my.desktop.x11;
 
@@ -9,9 +12,7 @@ let
     || cfg.i3.enable
     || cfg.awesome.enable
     || cfg.xmonad.enable;
-
-in
-{
+in {
   options.my.desktop.x11 = {
     enable = mkOption {
       type = types.bool;
@@ -66,4 +67,3 @@ in
     })
   ];
 }
-

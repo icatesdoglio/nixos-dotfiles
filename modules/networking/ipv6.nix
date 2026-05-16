@@ -1,12 +1,13 @@
-{ lib, config, ... }:
-
-let
-  cfg = config.my.networking.ipv6;
-in
 {
+  lib,
+  config,
+  ...
+}: let
+  cfg = config.my.networking.ipv6;
+in {
   options.my.networking.ipv6 = {
     method = lib.mkOption {
-      type = lib.types.enum [ "ignore" "auto" "dhcp" ];
+      type = lib.types.enum ["ignore" "auto" "dhcp"];
       default = "auto";
       description = ''
         IPv6 configuration method:
@@ -29,4 +30,3 @@ in
     })
   ];
 }
-

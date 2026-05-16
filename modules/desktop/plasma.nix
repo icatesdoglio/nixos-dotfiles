@@ -1,14 +1,15 @@
-{ config, pkgs, lib, ... }:
-
-let
-  cfg = config.my.desktop.plasma;
-in
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: let
+  cfg = config.my.desktop.plasma;
+in {
   options.my.desktop.plasma.enable =
     lib.mkEnableOption "Enable KDE Plasma desktop";
 
   config = lib.mkIf cfg.enable {
-
     # Plasma 6 (preferred)
     services.desktopManager.plasma6.enable = true;
 

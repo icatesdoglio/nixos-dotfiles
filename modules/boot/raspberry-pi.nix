@@ -1,7 +1,10 @@
-{ config, lib, pkgs, ... }:
-
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 lib.mkIf (config.my.host.platform == "raspberry-pi") {
-
   ##########################################################################
   # Safety
   ##########################################################################
@@ -16,7 +19,7 @@ lib.mkIf (config.my.host.platform == "raspberry-pi") {
   # Bootloader (nvmd-owned)
   ##########################################################################
 
-  boot.loader.raspberryPi = {
+  boot.loader.raspberry-pi = {
     enable = true;
     bootloader = "kernel";
   };
@@ -44,4 +47,3 @@ lib.mkIf (config.my.host.platform == "raspberry-pi") {
     memoryPercent = 50;
   };
 }
-

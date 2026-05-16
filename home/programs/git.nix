@@ -1,9 +1,11 @@
-{ lib, config, pkgs, ... }:
-
-let
-  cfg = config.my.hm.programs.git;
-in
 {
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
+  cfg = config.my.hm.programs.git;
+in {
   options.my.hm.programs.git.enable =
     lib.mkEnableOption "Git user configuration";
 
@@ -14,7 +16,11 @@ in
     };
 
     home.packages = with pkgs; [
-      git gh delta
+      git
+      gh
+      github-copilot-cli
+      codex
+      delta
     ];
 
     home.file.".config/git" = {
@@ -23,4 +29,3 @@ in
     };
   };
 }
-

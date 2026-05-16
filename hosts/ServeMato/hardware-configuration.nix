@@ -1,6 +1,10 @@
-{ config, lib, pkgs, modulesPath, ... }:
-
 {
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}: {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
@@ -9,16 +13,16 @@
   fileSystems."/boot/firmware" = {
     device = "/dev/disk/by-uuid/F063-F0CE";
     fsType = "vfat";
-    options = [ "noatime" ];
+    options = ["noatime"];
   };
 
   fileSystems."/" = {
     device = "/dev/disk/by-uuid/365dff42-d5be-41d1-a96f-a667c68ffb86";
     fsType = "ext4";
-    options = [ "noatime" ];
+    options = ["noatime"];
   };
   # No swap by default (Pi 5 uses zram)
-  swapDevices = [ ];
+  swapDevices = [];
 
   # Kernel modules automatically detected
   boot.initrd.availableKernelModules = [
@@ -28,7 +32,6 @@
     "usbhid"
   ];
 
-  boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ ];
-
+  boot.initrd.kernelModules = [];
+  boot.kernelModules = [];
 }

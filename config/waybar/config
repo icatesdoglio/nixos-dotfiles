@@ -1,7 +1,44 @@
 {
     "layer": "top",
-    "modules-left": ["hyprland/workspaces", "hyprland/window"],
-    "modules-right": ["battery", "cpu", "memory", "pulseaudio", "clock"],
+    "modules-left": [
+        "hyprland/workspaces", 
+        "hyprland/window"
+    ],
+    "modules-right": ["custom/network", "battery", "cpu", "custom/mem-cust", "pulseaudio", "clock"],
+
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "sort-by-number": true,
+        "on-click": "activate",
+        "format-icons": {
+            "1000": "󰓓", 
+            "999" : "󰎁", 
+            "1"   : "1", 
+            "2"   : "2", 
+            "3"   : "3", 
+            "4"   : "4", 
+            "5"   : "5", 
+            "6"   : "6", 
+            "7"   : "7", 
+            "8"   : "8", 
+            "9"   : "9", 
+            "10"  : "0"
+        }
+    },
+
+
+    "custom/network": {
+        "exec": "~/.config/waybar/scripts/network",
+        "interval": 3,
+        "return-type": "json"
+    },
+
+    "battery": {
+        "format": "{icon} {capacity}%",
+        "format-icons": ["", "", "", "", ""],
+        "format-charging": " {capacity}%",
+        "format-plugged": " {capacity}%"
+    },
 
     "clock": {
         "format": " {:%H:%M}"
@@ -11,13 +48,17 @@
         "format": " {usage}%"
     },
 
-    "memory": {
-        "format": " {used}/{total}GiB"
+    "custom/mem-cust": {
+        "exec": "~/.config/waybar/scripts/custom-memory",
+        "interval": 3
     },
 
     "pulseaudio": {
         "format": "  {volume}%",
         "format-muted": "",
-        "on-click": "pavucontrol"
+        "on-click": "~/.config/waybar/scripts/window", 
+        "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +1%",
+        "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -1%",
+        "tooltip": false
     }
 }

@@ -5,4 +5,3 @@
     ./binfmt.nix
   ];
 }
-

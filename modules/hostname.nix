@@ -1,8 +1,9 @@
-{ lib, config, ... }:
-
-with lib;
-
 {
+  lib,
+  config,
+  ...
+}:
+with lib; {
   options.my.host = {
     name = mkOption {
       type = types.str;
@@ -10,13 +11,13 @@ with lib;
     };
 
     role = mkOption {
-      type = types.enum [ "desktop" "laptop" "server" ];
+      type = types.enum ["desktop" "laptop" "server"];
       default = "desktop";
       description = "Host role";
     };
 
     platform = mkOption {
-      type = types.enum [ "x86_64" "raspberry-pi" ];
+      type = types.enum ["x86_64" "raspberry-pi"];
       default =
         if config.system.build.platform == "aarch64-linux"
         then "raspberry-pi"
@@ -38,4 +39,3 @@ with lib;
     ];
   };
 }
-

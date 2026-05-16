@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+# Never fail silently
+set +e
+
+json_escape() {
+  echo "$1" | sed 's/"/\\"/g'
+}
+
+# ---------- WiFi ----------
+wifi_iface=""
+ssid=""
+wifi_ip=""
+
+if command -v iw >/dev/null 2>&1; then
+  wifi_iface=$(iw dev 2>/dev/null | awk '$1=="Interface"{print $2}' | head -n1)
+  if [[ -n "$wifi_iface" ]]; then
+    ssid=$(iw dev "$wifi_iface" link 2>/dev/null | awk -F': ' '/SSID/{print $2}')
+    wifi_ip=$(ip -4 addr show "$wifi_iface" 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1)
+  fi
+fi
+
+# ---------- WireGuard ----------
+wg_home="wg0"
+wg_surf="ca-van"
+
+wg_lines=()
+
+for iface in "$wg_home" "$wg_surf"; do
+  if ip link show "$iface" >/dev/null 2>&1; then
+    if ip -o link show "$iface" | grep -q "UP"; then
+      ip4=$(ip -4 addr show "$iface" 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1)
+      wg_lines+=("$iface:$ip4")
+    fi
+  fi
+done
+
+# ---------- Default route ----------
+#
+egress_dev="$(ip route get 1.1.1.1 2>/dev/null \
+  | sed -n 's/.* dev \([^ ]*\).*/\1/p')"
+
+home_dev="$(ip route get 10.100.0.1 2>/dev/null \
+  | sed -n 's/.* dev \([^ ]*\).*/\1/p')"
+
+if [[ "$egress_dev" == "$wg_surf" ]]; then
+  class="vpn-egress"
+elif [[ "$home_dev" == "$wg_home" ]]; then
+  class="vpn-home"
+else
+  class="no-vpn"
+fi
+
+# ---------- Build output ----------
+text=""
+tooltip=""
+
+if [[ -n "$wifi_iface" ]]; then
+  text+="󰤨 "
+  tooltip+="WiFi ($wifi_iface)\nSSID: $ssid\nIP: $wifi_ip\n\n"
+fi
+
+for line in "${wg_lines[@]}"; do
+  iface=${line%%:*}
+  ip=${line##*:}
+  if [[ "$iface" == "$wg_home" ]]; then
+    text+="󰖂 "
+    tooltip+="WireGuard (Home)\nIP: $ip\n\n"
+  else
+    text+="󰖂 "
+    tooltip+="WireGuard (Surf)\nIP: $ip\n\n"
+  fi
+done
+
+if [[ -z "$text" ]]; then
+  text="󰲛"
+  tooltip="No active network interfaces"
+fi
+
+tooltip+="Default route: ${default_dev:-unknown}"
+
+# ---------- Class ----------
+if [[ "$egress_dev" == "$wg_surf" ]]; then
+  class="vpn-egress"
+elif [[ "$home_dev" == "$wg_home" ]]; then
+  class="vpn-home"
+else
+  class="no-vpn"
+fi
+
+# ---------- Emit JSON (ALWAYS) ----------
+printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \
+  "$(json_escape "$text")" \
+  "$(json_escape "$tooltip")" \
+  "$class"
+

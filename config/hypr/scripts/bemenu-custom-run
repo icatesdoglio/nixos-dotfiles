@@ -1,0 +1,24 @@
+# /bin/sh
+
+ACCENT="#c28b2c"
+BG="#16161e"
+FG="#c0caf5"
+DIM="#1a1b26"
+
+bemenu-run \
+  -p "Run:" \
+  -c -i -w -l 15 \
+  --binding vim \
+  --vim-esc-exits \
+  --margin 700 \
+  --fn "JetBrainsMono Nerd Font 13" \
+  --tb "$DIM" \
+  --tf "$FG" \
+  --fb "$BG" \
+  --ff "$FG" \
+  --nb "$BG" \
+  --nf "$FG" \
+  --hb "$ACCENT" \
+  --hf "$BG" \
+  --cb "$ACCENT" \
+  --cf "$BG"
