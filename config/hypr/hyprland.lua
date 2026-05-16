@@ -155,8 +155,8 @@ hl.bind(mainMod .. " + j", hl.dsp.focus({ direction = "up"    }))
 hl.bind(mainMod .. " + k", hl.dsp.focus({ direction = "down"  }))
 
 -- Resize (capital H/L = ALT+SHIFT+h/l)
-hl.bind(mainMod .. " + L", hl.dsp.window.resize("40 0"))
-hl.bind(mainMod .. " + H", hl.dsp.window.resize("-40 0"))
+-- hl.bind(mainMod .. " + L", hl.dsp.window.resize("40 0"))
+-- hl.bind(mainMod .. " + H", hl.dsp.window.resize("-40 0"))
 
 -- Workspaces
 for i = 1, 10 do
