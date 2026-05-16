@@ -251,8 +251,6 @@
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
-    xdg.portal.config.common.default = "hyprland";
-
   # services.caddy.enable = true;
 
   system.stateVersion = "26.05";

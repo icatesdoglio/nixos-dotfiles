@@ -51,9 +51,18 @@ in {
       ];
 
       xdg.portal.config = {
-        common.default = "hyprland";
-        hyprland.default = "hyprland";
-        river.default = "wlr";
+        common.default = ["gtk"];
+        hyprland = {
+          default = ["hyprland" "gtk"];
+          "org.freedesktop.impl.portal.ScreenCast" = "hyprland";
+          "org.freedesktop.impl.portal.Screenshot" = "hyprland";
+          "org.freedesktop.impl.portal.GlobalShortcuts" = "hyprland";
+        };
+        river = {
+          default = ["wlr" "gtk"];
+          "org.freedesktop.impl.portal.ScreenCast" = "wlr";
+          "org.freedesktop.impl.portal.Screenshot" = "wlr";
+        };
       };
 
       environment.systemPackages = with pkgs; [
@@ -89,4 +98,3 @@ in {
   ];
 }
 # vim: ts=2 sts=2 sw=2 et
-
