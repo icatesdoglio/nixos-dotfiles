@@ -2,6 +2,7 @@
   lib,
   config,
   pkgs,
+  inputs,
   ...
 }: let
   cfg = config.my.desktop.hyprland;
@@ -16,6 +17,12 @@ in {
     programs.hyprland = {
       enable = true;
       xwayland.enable = true;
+      package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+      portalPackage = inputs
+      .hyprland
+      .packages
+      .${pkgs.stdenv.hostPlatform.system}
+      .xdg-desktop-portal-hyprland;
     };
 
     programs.firefox.enable = true;

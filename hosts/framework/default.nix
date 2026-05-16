@@ -251,16 +251,7 @@
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
-    xdg.portal = {
-      enable = true;
-
-      config.common.default = "hyprland";
-
-      extraPortals = with pkgs; [
-        xdg-desktop-portal-hyprland
-        xdg-desktop-portal-gtk
-      ];
-    };
+    xdg.portal.config.common.default = "hyprland";
 
   # services.caddy.enable = true;
 

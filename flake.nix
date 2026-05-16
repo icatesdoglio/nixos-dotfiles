@@ -19,6 +19,11 @@
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
     /*
+    Hyprland Git repo for lua support -- pin
+    */
+    hyprland.url = "github:hyprwm/Hyprland/v0.55.0";
+
+    /*
     secrets
     */
     sops-nix = {
@@ -68,6 +73,7 @@
     self,
     nixpkgs,
     nixos-raspberrypi,
+    hyprland,
     sops-nix,
     home-manager,
     r423,
@@ -108,6 +114,7 @@
         suckless = suckless;
         dotfiles = dotfiles;
         bemenu = bemenu;
+        hyprland = hyprland;
       },
       extraModules ? [],
     }: let
