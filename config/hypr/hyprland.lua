@@ -84,6 +84,10 @@ hl.config({
         swallow_regex           = "^org\\.wezfurlong\\.wezterm$",
     },
 
+    cursor = {
+        no_hardware_cursors = true,
+    },
+
     input = {
         kb_layout  = "us",
         kb_variant = "",
