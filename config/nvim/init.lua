@@ -130,6 +130,35 @@ vim.lsp.config("ruff", {
   cmd = { "ruff", "server" },
 })
 
+vim.keymap.set("n", "<leader>rf", function()
+    local root = vim.fs.root(0, { "pyproject.toml", "setup.py", ".git" })
+    if not root then
+        vim.notify("ruff: no project root found", vim.log.levels.WARN)
+        return
+    end
+    local cd = "cd " .. vim.fn.shellescape(root) .. " && "
+    vim.fn.system(cd .. "ruff format .")
+    local output = vim.fn.systemlist(cd .. "ruff check --output-format concise .")
+    local items = {}
+    for _, line in ipairs(output) do
+        local file, lnum, col, msg = line:match("^(.+):(%d+):(%d+): (.+)$")
+        if file then
+            table.insert(items, {
+                filename = vim.fs.joinpath(root, file),
+                lnum = tonumber(lnum),
+                col = tonumber(col),
+                text = msg,
+            })
+        end
+    end
+    vim.fn.setqflist(items, "r")
+    if #items > 0 then
+        vim.cmd("copen")
+    else
+        vim.notify("ruff: all clear", vim.log.levels.INFO)
+    end
+end, { desc = "[R]uff [F]ormat + check → quickfix" })
+
 vim.lsp.enable("pyright")
 vim.lsp.enable("ruff")
 vim.lsp.enable("rust_analyzer")
