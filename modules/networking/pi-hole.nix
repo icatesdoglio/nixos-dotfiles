@@ -73,8 +73,6 @@ in {
 
       settings = {
         dns = {
-          interface = ["eth0" "wg0" "lo"];
-          listeningMode = "bind";
           upstreams = ["127.0.0.1#5335"];
 
           domainNeeded = true;
