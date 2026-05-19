@@ -27,7 +27,16 @@ window#waybar {
   border-radius: 1px;
 }
 
-#workspaces button {
+#custom-ws1,
+#custom-ws2,
+#custom-ws3,
+#custom-ws4,
+#custom-ws5,
+#custom-ws6,
+#custom-ws7,
+#custom-ws8,
+#custom-ws9,
+#custom-ws10 {
   padding: 0px 1px;
   margin: 0px 1px;
   background: rgba(255, 255, 255, 0.1);
@@ -35,7 +44,16 @@ window#waybar {
 }
 
 
-#workspaces button.active {
+#custom-ws1.active,
+#custom-ws2.active,
+#custom-ws3.active,
+#custom-ws4.active,
+#custom-ws5.active,
+#custom-ws6.active,
+#custom-ws7.active,
+#custom-ws8.active,
+#custom-ws9.active,
+#custom-ws10.active {
   box-shadow: inset 0 -4px #c28b2c;
 }
 #battery.charging {
@@ -61,4 +79,3 @@ window#waybar {
 #custom-network.vpn-egress {
   color: #9ece6a;
 }
-
