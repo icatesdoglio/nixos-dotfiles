@@ -194,6 +194,8 @@ vim.api.nvim_set_hl(0, "StatusLine", {
 })
 
 local blink = require("blink.cmp")
+local gh_issues = require("github_issues")
+gh_issues.setup_vt()
 
 blink.setup({
     keymap = { preset = "default" },
@@ -202,7 +204,14 @@ blink.setup({
     },
     completion = { documentation = { auto_show = true } },
     sources = {
-        default = { "lsp", "path", "snippets", "buffer" }
+        default = { "lsp", "path", "snippets", "buffer", "github_issues" },
+        providers = {
+            github_issues = {
+                name = "GH Issues",
+                module = "github_issues",
+                score_offset = 5,
+            },
+        },
     },
 
     fuzzy = { implementation = "prefer_rust_with_warning" }
