@@ -1,13 +1,14 @@
 -- MONITORS
-hl.monitor({ output = "desc:ASUSTek COMPUTER INC VG249Q3A S5LMTF021455", mode = "1920x1080@180", position = "0x0",    scale = "1"    })
-hl.monitor({ output = "desc:Acer Technologies Acer H236HL LX1AA0044210", mode = "1920x1080@60",  position = "1920x0", scale = "1"    })
-hl.monitor({ output = "eDP-1",                                            mode = "2560x1600@165", position = "3840x0", scale = "1.33" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VG249Q3A S5LMTF021455", mode = "1920x1080@180", position = "0x0",    scale = "1" })
+hl.monitor({ output = "desc:Acer Technologies Acer H236HL LX1AA0044210", mode = "1920x1080@60",  position = "1920x0", scale = "1" })
+hl.monitor({ output = "eDP-1",                                            mode = "2560x1600@165", position = "3840x0", scale = "1.6" })
 hl.monitor({ output = "",                                                  mode = "preferred",     position = "auto",   scale = "auto" })
 
 -- PROGRAMS
 local terminal    = "wezterm"
 local fileManager = "dolphin"
 local menu        = "~/.config/hypr/scripts/bemenu-custom-run"
+local screenshot  = "~/.config/hypr/scripts/screenshot"
 
 -- AUTOSTART
 hl.on("hyprland.start", function()
@@ -190,6 +191,10 @@ hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"),  { locked = t
 hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"),  { locked = true })
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),    { locked = true })
 
+-- Screenshot
+hl.bind("Print", hl.dsp.exec_cmd(screenshot))
+hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd(screenshot))
+
 -- Gaps
 hl.bind(mainMod .. " + SHIFT + u", hl.dsp.exec_cmd("~/.config/hypr/scripts/gaps.sh dec"), { locked = true, repeating = true })
 hl.bind(mainMod .. " + SHIFT + i", hl.dsp.exec_cmd("~/.config/hypr/scripts/gaps.sh inc"), { locked = true, repeating = true })
@@ -215,6 +220,15 @@ hl.window_rule({
     animation = "slide",
     rounding  = 5,
     move      = "monitor_w-window_w-20 50",
+})
+
+hl.window_rule({
+    name   = "zoom-annotate-toolbar",
+    match  = { class = "zoom", title = "annotate_toolbar" },
+    float  = true,
+    size   = "950 120",
+    pin    = true,
+    move   = "20 monitor_h-window_h-20",
 })
 
 hl.window_rule({

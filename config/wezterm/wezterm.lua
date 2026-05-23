@@ -10,7 +10,7 @@ config.color_scheme = "tokyonight"
 
 config.font = wezterm.font("JetBrainsMono Nerd Font Mono")
 
-config.font_size = 13
+config.font_size = 11
 
 config.use_fancy_tab_bar = false
 

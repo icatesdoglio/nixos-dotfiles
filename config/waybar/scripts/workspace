@@ -1,0 +1,33 @@
+#!/bin/sh
+
+case "$1" in
+  status)
+    id="$2"
+    label="$3"
+    output="${WAYBAR_OUTPUT_NAME:-}"
+    workspaces=$(hyprctl -j workspaces)
+    monitor=$(printf '%s\n' "$workspaces" | jq -r --argjson id "$id" '.[] | select(.id == $id) | .monitor')
+
+    if [ -n "$output" ] && [ "$monitor" != "$output" ]; then
+      printf '{"text":""}\n'
+      exit 0
+    fi
+
+    if [ -n "$output" ]; then
+      active_id=$(hyprctl -j monitors | jq -r --arg output "$output" '.[] | select(.name == $output) | .activeWorkspace.id')
+    else
+      active_id=$(hyprctl -j activeworkspace | jq -r '.id')
+    fi
+
+    if [ "$active_id" = "$id" ]; then
+      printf '{"text":"%s","class":"active"}\n' "$label"
+    else
+      printf '{"text":"%s"}\n' "$label"
+    fi
+    ;;
+  switch)
+    id="$2"
+    hyprctl dispatch "hl.dsp.focus({ workspace = $id })"
+    pkill -RTMIN+8 waybar
+    ;;
+esac

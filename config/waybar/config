@@ -1,31 +1,29 @@
 {
     "layer": "top",
     "modules-left": [
-        "hyprland/workspaces", 
+        "hyprland/workspaces",
         "hyprland/window"
     ],
-    "modules-right": ["custom/network", "battery", "cpu", "custom/mem-cust", "pulseaudio", "clock"],
+    "modules-right": ["custom/network", "battery", "cpu", "custom/mem-cust", "pulseaudio", "clock#date", "clock#time"],
 
     "hyprland/workspaces": {
         "format": "{icon}",
-        "sort-by-number": true,
-        "on-click": "activate",
         "format-icons": {
-            "1000": "󰓓", 
-            "999" : "󰎁", 
-            "1"   : "1", 
-            "2"   : "2", 
-            "3"   : "3", 
-            "4"   : "4", 
-            "5"   : "5", 
-            "6"   : "6", 
-            "7"   : "7", 
-            "8"   : "8", 
-            "9"   : "9", 
-            "10"  : "0"
-        }
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "7",
+            "8": "8",
+            "9": "9",
+            "10": "0",
+            "default": "{name}"
+        },
+        "sort-by": "number",
+        "tooltip": false
     },
-
 
     "custom/network": {
         "exec": "~/.config/waybar/scripts/network",
@@ -40,8 +38,36 @@
         "format-plugged": " {capacity}%"
     },
 
-    "clock": {
-        "format": " {:%H:%M}"
+    "clock#time": {
+        "format": " {:%H:%M}",
+        "timezone-tooltip-format": "{:%H:%M %Z}",
+        "timezones": [
+            "",
+            "America/Los_Angeles",
+            "America/Chicago",
+            "America/New_York",
+            "UTC"
+        ],
+        "tooltip": true,
+        "tooltip-format": "{tz_list}"
+    },
+    "clock#date": {
+        "format": " {:%a, %b %d}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "month",
+            "weeks-pos": "right",
+            "on-scroll": 1,
+            "format": {
+                "months": "<span color='#ffead3'><b>{}</b></span>",
+                "today": "<span color='#ff6699'><b><u>{}</u></b></span>"
+            }
+        },
+        "actions": {
+            "on-click-right": "mode",
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        }
     },
 
     "cpu": {

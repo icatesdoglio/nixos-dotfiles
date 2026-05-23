@@ -26,6 +26,9 @@ in {
         pkgs.hyprpaper
         pkgs.cliphist
         pkgs.wl-clipboard
+        pkgs.grim
+        pkgs.slurp
+        pkgs.jq
         pkgs.nushell
         pkgs.pavucontrol
         pkgs.apple-cursor

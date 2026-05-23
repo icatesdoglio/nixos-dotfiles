@@ -10,6 +10,7 @@
     ssh.enable = true;
     river.enable = true;
     confdev.enable = true;
+    obsidian.enable = true;
   };
 
   programs.bash.enable = true;

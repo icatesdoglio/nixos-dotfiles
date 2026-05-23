@@ -162,6 +162,7 @@ end, { desc = "[R]uff [F]ormat + check → quickfix" })
 vim.lsp.enable("pyright")
 vim.lsp.enable("ruff")
 vim.lsp.enable("rust_analyzer")
+vim.lsp.enable("marksman")
 -- vim.lsp.config("rust_analyzer", {
 --     settings = {}
 -- })
@@ -194,6 +195,8 @@ vim.api.nvim_set_hl(0, "StatusLine", {
 })
 
 local blink = require("blink.cmp")
+local gh_issues = require("github_issues")
+gh_issues.setup_vt()
 
 blink.setup({
     keymap = { preset = "default" },
@@ -202,7 +205,17 @@ blink.setup({
     },
     completion = { documentation = { auto_show = true } },
     sources = {
-        default = { "lsp", "path", "snippets", "buffer" }
+        default = { "lsp", "path", "snippets", "buffer", "github_issues" },
+        providers = {
+            github_issues = {
+                name = "GH Issues",
+                module = "github_issues",
+                enabled = function()
+                    return gh_issues.is_git_buffer()
+                end,
+                score_offset = 5,
+            },
+        },
     },
 
     fuzzy = { implementation = "prefer_rust_with_warning" }
