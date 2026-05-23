@@ -24,6 +24,7 @@ in {
         shellcheck
         alejandra
         pyright
+        marksman
         lua-language-server
       ];
       plugins = with pkgs.vimPlugins; [

@@ -223,6 +223,15 @@ hl.window_rule({
 })
 
 hl.window_rule({
+    name   = "zoom-annotate-toolbar",
+    match  = { class = "zoom", title = "annotate_toolbar" },
+    float  = true,
+    size   = "950 120",
+    pin    = true,
+    move   = "20 monitor_h-window_h-20",
+})
+
+hl.window_rule({
     name      = "steam",
     match     = { class = "steam" },
     workspace = "1000",

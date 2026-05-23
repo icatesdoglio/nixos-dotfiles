@@ -162,6 +162,7 @@ end, { desc = "[R]uff [F]ormat + check → quickfix" })
 vim.lsp.enable("pyright")
 vim.lsp.enable("ruff")
 vim.lsp.enable("rust_analyzer")
+vim.lsp.enable("marksman")
 -- vim.lsp.config("rust_analyzer", {
 --     settings = {}
 -- })

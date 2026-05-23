@@ -1,120 +1,29 @@
 {
     "layer": "top",
     "modules-left": [
-        "custom/ws1",
-        "custom/ws2",
-        "custom/ws3",
-        "custom/ws4",
-        "custom/ws5",
-        "custom/ws6",
-        "custom/ws7",
-        "custom/ws8",
-        "custom/ws9",
-        "custom/ws10",
+        "hyprland/workspaces",
         "hyprland/window"
     ],
-    "modules-right": ["custom/network", "battery", "cpu", "custom/mem-cust", "pulseaudio", "clock"],
+    "modules-right": ["custom/network", "battery", "cpu", "custom/mem-cust", "pulseaudio", "clock#date", "clock#time"],
 
-    "custom/ws1": {
-        "exec": "~/.config/waybar/scripts/workspace status 1 1",
-        "on-click": "~/.config/waybar/scripts/workspace switch 1",
-        "return-type": "json",
-        "interval": 2,
-        "signal": 8,
-        "hide-empty-text": true,
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "format-icons": {
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "7",
+            "8": "8",
+            "9": "9",
+            "10": "0",
+            "default": "{name}"
+        },
+        "sort-by": "number",
         "tooltip": false
     },
-
-    "custom/ws2": {
-        "exec": "~/.config/waybar/scripts/workspace status 2 2",
-        "on-click": "~/.config/waybar/scripts/workspace switch 2",
-        "return-type": "json",
-        "interval": 2,
-        "signal": 8,
-        "hide-empty-text": true,
-        "tooltip": false
-    },
-
-    "custom/ws3": {
-        "exec": "~/.config/waybar/scripts/workspace status 3 3",
-        "on-click": "~/.config/waybar/scripts/workspace switch 3",
-        "return-type": "json",
-        "interval": 2,
-        "signal": 8,
-        "hide-empty-text": true,
-        "tooltip": false
-    },
-
-    "custom/ws4": {
-        "exec": "~/.config/waybar/scripts/workspace status 4 4",
-        "on-click": "~/.config/waybar/scripts/workspace switch 4",
-        "return-type": "json",
-        "interval": 2,
-        "signal": 8,
-        "hide-empty-text": true,
-        "tooltip": false
-    },
-
-    "custom/ws5": {
-        "exec": "~/.config/waybar/scripts/workspace status 5 5",
-        "on-click": "~/.config/waybar/scripts/workspace switch 5",
-        "return-type": "json",
-        "interval": 2,
-        "signal": 8,
-        "hide-empty-text": true,
-        "tooltip": false
-    },
-
-    "custom/ws6": {
-        "exec": "~/.config/waybar/scripts/workspace status 6 6",
-        "on-click": "~/.config/waybar/scripts/workspace switch 6",
-        "return-type": "json",
-        "interval": 2,
-        "signal": 8,
-        "hide-empty-text": true,
-        "tooltip": false
-    },
-
-    "custom/ws7": {
-        "exec": "~/.config/waybar/scripts/workspace status 7 7",
-        "on-click": "~/.config/waybar/scripts/workspace switch 7",
-        "return-type": "json",
-        "interval": 2,
-        "signal": 8,
-        "hide-empty-text": true,
-        "tooltip": false
-    },
-
-    "custom/ws8": {
-        "exec": "~/.config/waybar/scripts/workspace status 8 8",
-        "on-click": "~/.config/waybar/scripts/workspace switch 8",
-        "return-type": "json",
-        "interval": 2,
-        "signal": 8,
-        "hide-empty-text": true,
-        "tooltip": false
-    },
-
-    "custom/ws9": {
-        "exec": "~/.config/waybar/scripts/workspace status 9 9",
-        "on-click": "~/.config/waybar/scripts/workspace switch 9",
-        "return-type": "json",
-        "interval": 2,
-        "signal": 8,
-        "hide-empty-text": true,
-        "tooltip": false
-    },
-
-    "custom/ws10": {
-        "exec": "~/.config/waybar/scripts/workspace status 10 0",
-        "on-click": "~/.config/waybar/scripts/workspace switch 10",
-        "return-type": "json",
-        "interval": 2,
-        "signal": 8,
-        "hide-empty-text": true,
-        "tooltip": false
-    },
-
 
     "custom/network": {
         "exec": "~/.config/waybar/scripts/network",
@@ -129,8 +38,36 @@
         "format-plugged": " {capacity}%"
     },
 
-    "clock": {
-        "format": " {:%H:%M}"
+    "clock#time": {
+        "format": " {:%H:%M}",
+        "timezone-tooltip-format": "{:%H:%M %Z}",
+        "timezones": [
+            "",
+            "America/Los_Angeles",
+            "America/Chicago",
+            "America/New_York",
+            "UTC"
+        ],
+        "tooltip": true,
+        "tooltip-format": "{tz_list}"
+    },
+    "clock#date": {
+        "format": " {:%a, %b %d}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "month",
+            "weeks-pos": "right",
+            "on-scroll": 1,
+            "format": {
+                "months": "<span color='#ffead3'><b>{}</b></span>",
+                "today": "<span color='#ff6699'><b><u>{}</u></b></span>"
+            }
+        },
+        "actions": {
+            "on-click-right": "mode",
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        }
     },
 
     "cpu": {

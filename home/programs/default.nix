@@ -7,5 +7,6 @@
     ./river.nix
     ./confdev.nix
     ./bash.nix
+    ./obsidian.nix
   ];
 }
