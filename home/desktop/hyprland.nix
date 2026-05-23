@@ -46,7 +46,8 @@ in {
           force = true;
         };
         # Stable symlink so config/hypr/.luarc.json can reference ../hypr-stubs
-        ".config/hypr-stubs".source = "${hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland}/share/hypr/stubs";
+        ".config/hypr-stubs".source =
+          "${hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland}/share/hypr/stubs";
         ".config/swaync" = {
           source = ../../config/swaync;
           force = true;
