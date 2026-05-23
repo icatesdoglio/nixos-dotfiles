@@ -210,6 +210,9 @@ blink.setup({
             github_issues = {
                 name = "GH Issues",
                 module = "github_issues",
+                enabled = function()
+                    return gh_issues.is_git_buffer()
+                end,
                 score_offset = 5,
             },
         },

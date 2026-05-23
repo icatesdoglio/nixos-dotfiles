@@ -11,7 +11,7 @@ in {
 
     vaultDir = lib.mkOption {
       type = lib.types.str;
-      default = "${config.home.homeDirectory}/notes/dev";
+      default = "${config.home.homeDirectory}/vaults/dev";
       description = "Development note vault path.";
     };
 
@@ -33,6 +33,16 @@ in {
       OBSIDIAN_DEV_VAULT = cfg.vaultDir;
       STOCHHEDGE_REPO = cfg.stochhedgeRepo;
     };
+
+    home.activation.createDevNoteVault = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      $DRY_RUN_CMD mkdir -p \
+        ${lib.escapeShellArg cfg.vaultDir}/Daily \
+        ${lib.escapeShellArg cfg.vaultDir}/Inbox \
+        ${lib.escapeShellArg cfg.vaultDir}/Repos \
+        ${lib.escapeShellArg cfg.vaultDir}/Decisions \
+        ${lib.escapeShellArg cfg.vaultDir}/Snippets \
+        ${lib.escapeShellArg cfg.vaultDir}/Templates
+    '';
 
     programs.bash = {
       shellAliases = {

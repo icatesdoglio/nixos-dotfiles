@@ -2,6 +2,17 @@
 
 local M = {}
 
+local function is_git_buffer(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+  local ft = vim.bo[buf].filetype
+
+  return ft:match("^git") ~= nil
+    or ft:match("^Neogit") ~= nil
+    or ft == "fugitive"
+end
+
+M.is_git_buffer = is_git_buffer
+
 -- Shared issue cache (number -> {number, title, state, body})
 local cache = {
   by_num = {},   -- [number] = issue
@@ -78,6 +89,15 @@ function Source:get_trigger_characters()
 end
 
 function Source:get_completions(_, callback)
+  if not is_git_buffer() then
+    callback({
+      items = {},
+      is_incomplete_forward = false,
+      is_incomplete_backward = false,
+    })
+    return
+  end
+
   on_ready(function(issues)
     local items = {}
     for _, issue in ipairs(issues) do
@@ -104,11 +124,6 @@ end
 -- ── Virtual text ──────────────────────────────────────────────────────────────
 
 local vt_ns = vim.api.nvim_create_namespace("github_issues_vt")
-
-local VT_FT = {
-  gitcommit = true, NeogitCommitMessage = true,
-  markdown = true, text = true, gitrebase = true,
-}
 
 local function render_vt(buf)
   if not vim.api.nvim_buf_is_valid(buf) then return end
@@ -148,15 +163,13 @@ function M.setup_vt()
 
   vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost" }, {
     callback = function(args)
-      local ft = vim.bo[args.buf].filetype
-      if VT_FT[ft] then render_vt(args.buf) end
+      if is_git_buffer(args.buf) then render_vt(args.buf) end
     end,
   })
 
   vim.api.nvim_create_autocmd("CursorHold", {
     callback = function(args)
-      local ft = vim.bo[args.buf].filetype
-      if VT_FT[ft] and vim.api.nvim_get_current_line():find("#%d+") then
+      if is_git_buffer(args.buf) and vim.api.nvim_get_current_line():find("#%d+") then
         render_vt(args.buf)
       end
     end,
@@ -165,8 +178,7 @@ function M.setup_vt()
   -- Pre-warm cache in background
   on_ready(function(_)
     local buf = vim.api.nvim_get_current_buf()
-    local ft = vim.bo[buf].filetype
-    if VT_FT[ft] then render_vt(buf) end
+    if is_git_buffer(buf) then render_vt(buf) end
   end)
 end
 
