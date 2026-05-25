@@ -242,3 +242,9 @@ hl.window_rule({
     match     = { class = "org.jellyfin.JellyfinDesktop" },
     workspace = "999",
 })
+
+hl.window_rule({
+    name      = "slack",
+    match     = { class = "Slack" },
+    workspace = "998",
+})
