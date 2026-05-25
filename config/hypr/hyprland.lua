@@ -199,15 +199,40 @@ hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd(screenshot))
 hl.bind(mainMod .. " + SHIFT + u", hl.dsp.exec_cmd("~/.config/hypr/scripts/gaps.sh dec"), { locked = true, repeating = true })
 hl.bind(mainMod .. " + SHIFT + i", hl.dsp.exec_cmd("~/.config/hypr/scripts/gaps.sh inc"), { locked = true, repeating = true })
 
+local function client_exists(class)
+    for _, window in ipairs(hl.get_windows()) do
+        if window.class == class then
+            return true
+        end
+    end
+    return false
+end
+
+local function singleton_workspace(class, command, workspace)
+    return function()
+        if not client_exists(class) then
+            hl.exec_cmd(command)
+        end
+    hl.dispatch(hl.dsp.focus( {workspace = workspace }))
+    end
+end
+
 -- Steam singleton → workspace 1000
-hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(
-    "sh -c \"hyprctl clients | grep -q 'class: steam' || steam; hyprctl dispatch workspace 1000\""
-))
+hl.bind(
+    mainMod .. " + S", 
+    singleton_workspace("steam", "steam", "1000")
+)
 
 -- Jellyfin → workspace 999
-hl.bind(mainMod .. " + m", hl.dsp.exec_cmd(
-    "sh -c \"hyprctl clients | grep -q 'class: org.jellyfin.JellyfinDesktop' || jellyfin-desktop; hyprctl dispatch workspace 999\""
-))
+hl.bind(
+    mainMod .. " + m", 
+    singleton_workspace("org.jellyfin.JellyfinDesktop", "jellyfin-desktop", 999)
+)
+
+hl.bind(
+    mainMod .. " + w",
+    singleton_workspace("Slack", "slack", 998)
+)
 
 -- WINDOW RULES
 hl.window_rule({
