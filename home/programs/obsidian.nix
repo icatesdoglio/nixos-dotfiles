@@ -146,8 +146,6 @@ in {
     programs.bash = {
       shellAliases = {
         notes = "cd ${lib.escapeShellArg cfg.vaultDir}";
-        stochhedge = "cd ${lib.escapeShellArg cfg.stochhedgeRepo}";
-        vault-sync = "systemctl --user start obsidian-vault-sync.service";
       };
 
       initExtra = ''
