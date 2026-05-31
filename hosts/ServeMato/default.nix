@@ -430,6 +430,8 @@
     ];
   };
 
+  systemd.services.qbittorrent.serviceConfig.UMask = "0002";
+
   services.qbittorrent = {
     enable = true;
     user = "qbit";
@@ -466,6 +468,12 @@
       */
       Preferences.Connection.UPnP = false;
       LegalNotice.Accepted = true;
+
+      /*
+      seeding limits
+      */
+      Preferences.Bittorrent.MaxRatio = 2.0;
+      Preferences.Bittorrent.MaxRatioAction = 1; # 1 = pause torrent
     };
   };
 
