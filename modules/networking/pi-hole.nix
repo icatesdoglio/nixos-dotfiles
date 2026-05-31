@@ -44,6 +44,16 @@ in {
         Requires dnsmasq wildcard rules.
       '';
     };
+
+    listenAddresses = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = ["127.0.0.1"];
+      description = ''
+        Addresses dnsmasq should bind to. Setting this adds bind-interfaces
+        to prevent dnsmasq from grabbing 0.0.0.0:53 (which conflicts with
+        podman's aardvark-dns on container bridge IPs).
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -89,7 +99,9 @@ in {
             "domain-needed"
             "bogus-priv"
             "domain=${cfg.localDomain}"
+            "bind-interfaces"
           ]
+          ++ map (addr: "listen-address=${addr}") cfg.listenAddresses
           ++ dnsReservationLines
           ++ wildcardLines;
       };

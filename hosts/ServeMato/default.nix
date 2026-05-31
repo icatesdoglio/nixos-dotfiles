@@ -126,9 +126,7 @@
    service users
   *************
   */
-  users.groups.media = {
-    gid = 992;
-  };
+  users.groups.media = {gid = 985;};
 
   users.users.qbit = {
     isSystemUser = true;
@@ -167,6 +165,9 @@
     enable = true;
     hostIP = "10.100.0.1";
     wildcardDomains = ["servemato.lan"];
+    # Explicit bind prevents dnsmasq from grabbing 0.0.0.0:53, which
+    # conflicts with podman aardvark-dns on container bridge IPs.
+    listenAddresses = ["127.0.0.1" "192.168.0.30" "10.100.0.1"];
   };
 
   # Host records derived from registry — dnsmasq reads /etc/hosts natively,
@@ -211,7 +212,10 @@
     80 # HTTP (Caddy)
     443 # HTTPS (Caddy)
     3000 # Home Page
-    8081 # Web UI
+    6767 # bazarr
+    8081 # qBittorrent Web UI
+    8096 # jellyfin
+    8787 # readarr
     9696 # prowlarr
     9697 # radarr
     9698 # sonarr
@@ -355,11 +359,14 @@
   So must wait for unbound
   there's almost certainly a cleaner solution
   */
-  systemd.services.wireguard-ca-van.after = [
-    "network-online.target"
-    "unbound.service"
-    "pihole-ftl.service"
-  ];
+  systemd.services.wireguard-ca-van = {
+    after = [
+      "network-online.target"
+      "unbound.service"
+      "pihole-ftl.service"
+    ];
+    wants = ["network-online.target"];
+  };
   systemd.services.unbound = {
     after = ["network.target"];
     wants = ["network.target"];
@@ -389,7 +396,6 @@
   */
   services.homepage-dashboard = {
     enable = true;
-
     listenPort = 3000;
     allowedHosts = "10.100.0.1:3000";
 
@@ -399,52 +405,29 @@
       color = "slate";
     };
 
-    services = {
-      Media = [
-        {
-          Radarr = {
-            href = "http://10.100.0.1:9697";
-            description = "Movies";
-          };
-        }
-        {
-          Sonarr = {
-            href = "http://10.100.0.1:9698";
-            description = "TV Shows";
-          };
-        }
-        {
-          Prowlarr = {
-            href = "http://10.100.0.1:9696";
-            description = "Indexers";
-          };
-        }
-        {
-          qBittorrent = {
-            href = "http://10.100.0.1:8081";
-            description = "Downloads";
-          };
-        }
-      ];
-
-      Files = [
-        {
-          Seafile = {
-            href = "https://seafile.servemato.lan";
-            description = "File sync and storage";
-          };
-        }
-      ];
-
-      Infrastructure = [
-        {
-          Pi-hole = {
-            href = "http://10.100.0.1:8080";
-            description = "DNS";
-          };
-        }
-      ];
-    };
+    services = [
+      {
+        Media = [
+          {Jellyfin = {href = "http://10.100.0.1:8096"; description = "Media server";};}
+          {Radarr = {href = "http://10.100.0.1:9697"; description = "Movies";};}
+          {Sonarr = {href = "http://10.100.0.1:9698"; description = "TV Shows";};}
+          {Readarr = {href = "http://10.100.0.1:8787"; description = "Audiobooks & Books";};}
+          {Bazarr = {href = "http://10.100.0.1:6767"; description = "Subtitles";};}
+          {Prowlarr = {href = "http://10.100.0.1:9696"; description = "Indexers";};}
+          {qBittorrent = {href = "http://10.100.0.1:8081"; description = "Downloads";};}
+        ];
+      }
+      {
+        Files = [
+          {Seafile = {href = "https://seafile.servemato.lan"; description = "File sync and storage";};}
+        ];
+      }
+      {
+        Infrastructure = [
+          {"Pi-hole" = {href = "http://10.100.0.1:8080"; description = "DNS";};}
+        ];
+      }
+    ];
   };
 
   services.qbittorrent = {
@@ -492,6 +475,8 @@
 
     openFirewall = false;
     settings = {
+      auth.method = "Forms";
+      auth.required = "DisabledForLocalAddresses";
       log.analyticsEnabled = false;
       server.port = 9696;
       update = {
@@ -503,9 +488,12 @@
   services.radarr = {
     enable = true;
     dataDir = "/srv/radarr";
+    group = "media";
 
     openFirewall = false;
     settings = {
+      auth.method = "Forms";
+      auth.required = "DisabledForLocalAddresses";
       log.analyticsEnabled = false;
       server.port = 9697;
       update = {
@@ -522,6 +510,8 @@
 
     openFirewall = false;
     settings = {
+      auth.method = "Forms";
+      auth.required = "DisabledForLocalAddresses";
       log.analyticsEnabled = false;
       server.port = 9698;
       update = {
@@ -533,7 +523,7 @@
 
   services.jellyfin = {
     enable = true;
-    openFirewall = true;
+    openFirewall = false;
 
     user = "jellyfin";
     group = "media";
@@ -541,6 +531,93 @@
     configDir = "/srv/jellyfin/config";
     cacheDir = "/var/cache/jellyfin";
   };
+
+  services.bazarr = {
+    enable = true;
+    openFirewall = false;
+  };
+
+  services.readarr = {
+    enable = true;
+    dataDir = "/srv/readarr";
+    group = "media";
+    openFirewall = false;
+    settings = {
+      auth.method = "Forms";
+      auth.required = "DisabledForLocalAddresses";
+      log.analyticsEnabled = false;
+      server.port = 8787;
+      update = {
+        automatically = false;
+        mechanism = "external";
+      };
+    };
+  };
+  systemd.services.readarr.serviceConfig.ExecStartPre = "+" + toString (pkgs.writeShellScript "readarr-preseed" ''
+    if [ ! -f /srv/readarr/config.xml ]; then
+      cat > /srv/readarr/config.xml <<'XML'
+<Config>
+  <AuthenticationMethod>Forms</AuthenticationMethod>
+  <AuthenticationRequired>DisabledForLocalAddresses</AuthenticationRequired>
+  <Port>8787</Port>
+  <LogLevel>info</LogLevel>
+  <Branch>develop</Branch>
+</Config>
+XML
+      chown readarr:media /srv/readarr/config.xml
+      chmod 0660 /srv/readarr/config.xml
+    fi
+  '');
+  systemd.services.prowlarr.serviceConfig = {
+    SupplementaryGroups = ["media"];
+    ExecStartPre = "+" + toString (pkgs.writeShellScript "prowlarr-preseed" ''
+      if [ ! -f /var/lib/prowlarr/config.xml ]; then
+        cat > /var/lib/prowlarr/config.xml <<'XML'
+<Config>
+  <AuthenticationMethod>Forms</AuthenticationMethod>
+  <AuthenticationRequired>DisabledForLocalAddresses</AuthenticationRequired>
+  <Port>9696</Port>
+  <LogLevel>info</LogLevel>
+  <Branch>main</Branch>
+</Config>
+XML
+      fi
+    '');
+  };
+
+  systemd.services.radarr.serviceConfig.ExecStartPre = "+" + toString (pkgs.writeShellScript "radarr-preseed" ''
+    if [ ! -f ${config.services.radarr.dataDir}/config.xml ]; then
+      cat > ${config.services.radarr.dataDir}/config.xml <<'XML'
+<Config>
+  <AuthenticationMethod>Forms</AuthenticationMethod>
+  <AuthenticationRequired>DisabledForLocalAddresses</AuthenticationRequired>
+  <Port>9697</Port>
+  <LogLevel>info</LogLevel>
+  <Branch>main</Branch>
+</Config>
+XML
+      chown radarr:media ${config.services.radarr.dataDir}/config.xml
+      chmod 0660 ${config.services.radarr.dataDir}/config.xml
+    fi
+  '');
+
+  systemd.services.sonarr.serviceConfig.ExecStartPre = "+" + toString (pkgs.writeShellScript "sonarr-preseed" ''
+    if [ ! -f ${config.services.sonarr.dataDir}/config.xml ]; then
+      cat > ${config.services.sonarr.dataDir}/config.xml <<'XML'
+<Config>
+  <AuthenticationMethod>Forms</AuthenticationMethod>
+  <AuthenticationRequired>DisabledForLocalAddresses</AuthenticationRequired>
+  <Port>9698</Port>
+  <LogLevel>info</LogLevel>
+  <Branch>main</Branch>
+</Config>
+XML
+      chown sonarr:media ${config.services.sonarr.dataDir}/config.xml
+      chmod 0660 ${config.services.sonarr.dataDir}/config.xml
+    fi
+  '');
+
+  systemd.services.bazarr.serviceConfig.SupplementaryGroups = ["media"];
 
   environment.etc."seafile/docker-compose.yml".text = ''
     services:
@@ -622,10 +699,13 @@
   };
 
   systemd.tmpfiles.rules = [
-    "d /srv 0770 root media -"
-    "d /data 0770 root media -"
+    "z /srv 0770 root media -"
+    "z /data 0770 root media -"
 
-    "d /srv/media/downloads 0770 qbit media -"
+    "d /data/torrents 0770 qbit media -"
+    "d /data/torrents/incomplete 0770 qbit media -"
+    "d /data/media/movies 0770 root media -"
+    "d /data/media/tv 0770 root media -"
 
     "d /data/seafile 0770 seafile seafile -"
     "d /data/media 0770 root media -"
@@ -635,14 +715,27 @@
     "d /srv/media 0770 root media -"
     "d /srv/syncthing 0770 syncthing syncthing -"
 
+    "d /srv/prowlarr 0770 root media -"
+    "d /srv/readarr 0770 readarr media -"
+    "d /data/media/audiobooks 0770 root media -"
+    "d /data/media/books 0770 root media -"
     "d /srv/radarr 0770 radarr media -"
     "d /srv/sonarr 0770 sonarr media -"
+    "d /srv/bazarr 0770 root media -"
 
     "d /srv/jellyfin 0770 jellyfin media -"
     "d /srv/jellyfin/data 0770 jellyfin media -"
     "d /srv/jellyfin/config 0770 jellyfin media -"
     "d /var/cache/jellyfin 0770 jellyfin media -"
   ];
+
+  system.activationScripts.arrStateOwnership.text = ''
+    mkdir -p /srv/radarr /srv/sonarr /srv/readarr
+    chown -R radarr:media /srv/radarr
+    chown -R sonarr:media /srv/sonarr
+    chown -R readarr:media /srv/readarr
+    chmod -R u+rwX,g+rwX,o-rwx /srv/radarr /srv/sonarr /srv/readarr
+  '';
 
   fileSystems."/srv/seafile" = {
     device = "/data/seafile";

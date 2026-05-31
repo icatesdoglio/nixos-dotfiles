@@ -18,6 +18,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("waybar")
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("swaync")
+    hl.exec_cmd("seaf-cli start")
 end)
 
 -- ENVIRONMENT
@@ -87,6 +88,7 @@ hl.config({
 
     cursor = {
         no_hardware_cursors = true,
+        default_monitor     = "eDP-1",
     },
 
     input = {
@@ -154,6 +156,7 @@ hl.bind(mainMod .. " + P",               hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + SHIFT + F",       hl.dsp.window.fullscreen())
 
 -- Focus (hjkl)
+hl.bind(mainMod .. " + Tab", hl.dsp.focus({ workspace = "previous" }), { release = true })
 hl.bind(mainMod .. " + l", hl.dsp.focus({ direction = "right" }))
 hl.bind(mainMod .. " + h", hl.dsp.focus({ direction = "left"  }))
 hl.bind(mainMod .. " + j", hl.dsp.focus({ direction = "up"    }))
@@ -234,6 +237,11 @@ hl.bind(
     singleton_workspace("Slack", "slack", 998)
 )
 
+hl.bind(
+    mainMod .. " + n",
+    singleton_workspace("spotify", "spotify", 996)
+)
+
 -- WINDOW RULES
 hl.window_rule({
     name      = "pavu-float",
@@ -251,9 +259,9 @@ hl.window_rule({
     name   = "zoom-annotate-toolbar",
     match  = { class = "zoom", title = "annotate_toolbar" },
     float  = true,
-    size   = "950 120",
+    size   = "50 50",
     pin    = true,
-    move   = "20 monitor_h-window_h-20",
+    move   = "20 monitor_h-window_h-100",
 })
 
 hl.window_rule({
@@ -272,4 +280,10 @@ hl.window_rule({
     name      = "slack",
     match     = { class = "Slack" },
     workspace = "998",
+})
+
+hl.window_rule({
+    name      = "spotify",
+    match     = { class = "spotify" },
+    workspace = "996",
 })
