@@ -216,6 +216,8 @@
     8081 # qBittorrent Web UI
     8096 # jellyfin
     8787 # readarr
+    8787 # readarr
+    13378 # audiobookshelf
     9696 # prowlarr
     9697 # radarr
     9698 # sonarr
@@ -412,6 +414,7 @@
           {Radarr = {href = "http://10.100.0.1:9697"; description = "Movies";};}
           {Sonarr = {href = "http://10.100.0.1:9698"; description = "TV Shows";};}
           {Readarr = {href = "http://10.100.0.1:8787"; description = "Audiobooks & Books";};}
+          {Audiobookshelf = {href = "http://10.100.0.1:13378"; description = "Audiobook & ebook library";};}
           {Bazarr = {href = "http://10.100.0.1:6767"; description = "Subtitles";};}
           {Prowlarr = {href = "http://10.100.0.1:9696"; description = "Indexers";};}
           {qBittorrent = {href = "http://10.100.0.1:8081"; description = "Downloads";};}
@@ -473,7 +476,7 @@
       seeding limits
       */
       Preferences.Bittorrent.MaxRatio = 2.0;
-      Preferences.Bittorrent.MaxRatioAction = 1; # 1 = pause torrent
+      Preferences.Bittorrent.MaxRatioAction = 0; # 0 = pause torrent
     };
   };
 
@@ -561,21 +564,15 @@
       };
     };
   };
-  systemd.services.readarr.serviceConfig.ExecStartPre = "+" + toString (pkgs.writeShellScript "readarr-preseed" ''
-    if [ ! -f /srv/readarr/config.xml ]; then
-      cat > /srv/readarr/config.xml <<'XML'
-<Config>
-  <AuthenticationMethod>Forms</AuthenticationMethod>
-  <AuthenticationRequired>DisabledForLocalAddresses</AuthenticationRequired>
-  <Port>8787</Port>
-  <LogLevel>info</LogLevel>
-  <Branch>develop</Branch>
-</Config>
-XML
-      chown readarr:media /srv/readarr/config.xml
-      chmod 0660 /srv/readarr/config.xml
-    fi
-  '');
+
+  services.audiobookshelf = {
+    enable = true;
+    host = "0.0.0.0";
+    port = 13378;
+    group = "media";
+    openFirewall = false;
+  };
+
   systemd.services.prowlarr.serviceConfig = {
     SupplementaryGroups = ["media"];
     ExecStartPre = "+" + toString (pkgs.writeShellScript "prowlarr-preseed" ''
@@ -606,6 +603,24 @@ XML
 XML
       chown radarr:media ${config.services.radarr.dataDir}/config.xml
       chmod 0660 ${config.services.radarr.dataDir}/config.xml
+    fi
+  '');
+
+  systemd.services.readarr.environment.READARR__METADATASOURCE = "https://api.bookinfo.pro";
+
+  systemd.services.readarr.serviceConfig.ExecStartPre = "+" + toString (pkgs.writeShellScript "readarr-preseed" ''
+    if [ ! -f /srv/readarr/config.xml ]; then
+      cat > /srv/readarr/config.xml <<'XML'
+<Config>
+  <AuthenticationMethod>Forms</AuthenticationMethod>
+  <AuthenticationRequired>DisabledForLocalAddresses</AuthenticationRequired>
+  <Port>8787</Port>
+  <LogLevel>info</LogLevel>
+  <Branch>develop</Branch>
+</Config>
+XML
+      chown readarr:media /srv/readarr/config.xml
+      chmod 0660 /srv/readarr/config.xml
     fi
   '');
 

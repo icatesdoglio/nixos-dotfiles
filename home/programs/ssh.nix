@@ -13,33 +13,33 @@ in {
       enable = true;
       enableDefaultConfig = false;
 
-      matchBlocks = {
+      settings = {
         "*" = {
-          identityFile = "~/.ssh/id_ed25519";
-          identitiesOnly = true;
-          addKeysToAgent = "yes";
-          serverAliveInterval = 30;
-          serverAliveCountMax = 3;
-          forwardAgent = false;
+          IdentityFile = "~/.ssh/id_ed25519";
+          IdentitiesOnly = true;
+          AddKeysToAgent = "yes";
+          ServerAliveInterval = 30;
+          ServerAliveCountMax = 3;
+          ForwardAgent = false;
         };
 
         servemato = {
-          hostname = "10.100.0.1";
-          user = "ian";
-          identityFile = "~/.ssh/id_ed25519";
+          Hostname = "10.100.0.1";
+          User = "ian";
+          IdentityFile = "~/.ssh/id_ed25519";
         };
 
         gp-linux = {
-          hostname = "10.100.0.2";
-          user = "ian";
-          identityFile = "~/.ssh/id_ed25519";
-          proxyJump = "servemato";
+          Hostname = "10.100.0.2";
+          User = "ian";
+          IdentityFile = "~/.ssh/id_ed25519";
+          ProxyJump = "servemato";
         };
 
         mini-mine = {
-          hostname = "10.100.0.3";
-          user = "ian_cd";
-          identityFile = "~/.ssh/id_ed25519";
+          Hostname = "10.100.0.3";
+          User = "ian_cd";
+          IdentityFile = "~/.ssh/id_ed25519";
         };
       };
     };

@@ -1,7 +1,9 @@
 -- MONITORS
 hl.monitor({ output = "desc:ASUSTek COMPUTER INC VG249Q3A S5LMTF021455", mode = "1920x1080@180", position = "0x0",    scale = "1" })
 hl.monitor({ output = "desc:Acer Technologies Acer H236HL LX1AA0044210", mode = "1920x1080@60",  position = "1920x0", scale = "1" })
-hl.monitor({ output = "eDP-1",                                            mode = "2560x1600@165", position = "3840x0", scale = "1.6" })
+hl.monitor({ output = "eDP-1",                                            mode = "2560x1600@165", position = "3840x0", scale = "1.25" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036497",    mode = "1920x1080@60",  position = "5888x0", scale = "0.8" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036502",    mode = "1920x1080@60",  position = "8288x0", scale = "0.8" })
 hl.monitor({ output = "",                                                  mode = "preferred",     position = "auto",   scale = "auto" })
 
 -- PROGRAMS
