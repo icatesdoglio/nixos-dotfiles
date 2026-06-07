@@ -4,25 +4,36 @@
         "hyprland/workspaces",
         "hyprland/window"
     ],
-    "modules-right": ["custom/network", "battery", "cpu", "custom/mem-cust", "pulseaudio", "clock#date", "clock#time"],
+    "modules-right": ["custom/seafile", "custom/network", "battery", "cpu", "custom/mem-cust", "pulseaudio", "clock#date", "clock#time"],
 
     "hyprland/workspaces": {
         "format": "{icon}",
         "format-icons": {
-            "1": "1",
-            "2": "2",
-            "3": "3",
-            "4": "4",
-            "5": "5",
-            "6": "6",
-            "7": "7",
-            "8": "8",
-            "9": "9",
-            "10": "0",
-            "default": "{name}"
+            "1":    "1",
+            "2":    "2",
+            "3":    "3",
+            "4":    "4",
+            "5":    "5",
+            "6":    "6",
+            "7":    "7",
+            "8":    "8",
+            "9":    "9",
+            "10":   "0",
+            "996":  "󰎇",
+            "997":  "",
+            "998":  "󰒱",
+            "999":  "󰿎",
+            "1000": "󰓓"
         },
         "sort-by": "number",
         "tooltip": false
+    },
+
+    "custom/seafile": {
+        "exec": "~/.config/waybar/scripts/seafile",
+        "interval": 5,
+        "return-type": "json",
+        "on-click": "seafile-applet"
     },
 
     "custom/network": {

@@ -245,6 +245,10 @@ local ts = require("telescope.builtin")
 
 vim.keymap.set("n", "<leader>sf", ts.find_files)
 vim.keymap.set("n", "<leader>sg", ts.live_grep)
+vim.keymap.set("n", "<leader>sd", function()
+  local dir = vim.fn.input("Grep dir: ", "", "dir")
+  ts.live_grep(dir ~= "" and { search_dirs = { dir } } or nil)
+end)
 vim.keymap.set("n", "<leader><leader>", ts.buffers)
 vim.keymap.set("n", "<leader>sw", ts.grep_string)
 vim.keymap.set("n", "<leader>sr", ts.resume)
@@ -269,20 +273,7 @@ end
 
 local function open_harpoon_menu()
 	local list = harpoon:list()
-	local items = list.items or {}
-
-	local lines = {}
-
-	for i, item in ipairs(items) do
-		local value = item.value or tostring(item)
-		local filename = vim.fn.fnamemodify(value, ":~:.")
-		table.insert(lines, string.format(" %d  %s ", i, filename))
-	end
-
-	-- Open an empty menu instead of notifying/logging.
-	if #lines == 0 then
-		lines = { "" }
-	end
+	local lines = list:display()
 
 	local width = 0
 	for _, line in ipairs(lines) do
@@ -290,7 +281,7 @@ local function open_harpoon_menu()
 	end
 
 	width = math.max(width, 32)
-	local height = #lines
+	local height = math.max(#lines, 5)
 
     local function relative_position(width, height, row_pct, col_pct)
         local editor_width = vim.o.columns
@@ -305,6 +296,8 @@ local function open_harpoon_menu()
     local row, col = relative_position(width, height, 0.4, 0.5)
 
 	local buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_name(buf, "__harpoon-menu__" .. buf)
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
 	local win = vim.api.nvim_open_win(buf, true, {
 		relative = "editor",
@@ -319,33 +312,54 @@ local function open_harpoon_menu()
 		zindex = 50,
 	})
 
+	vim.bo[buf].buftype = "acwrite"
+	vim.bo[buf].bufhidden = "wipe"
+	vim.bo[buf].filetype = "harpoon"
+	vim.wo[win].number = true
+	vim.wo[win].wrap = false
+
 	vim.wo[win].winhighlight = table.concat({
 		"FloatBorder:HarpoonInnerBorder",
 		"FloatTitle:HarpoonMenuTitle",
 		"NormalFloat:Normal",
 	}, ",")
 
+	local function save_menu()
+		local contents = vim.api.nvim_buf_get_lines(buf, 0, -1, true)
+		list:resolve_displayed(contents, #contents)
+	end
+
 	local function close_menu()
 		if vim.api.nvim_win_is_valid(win) then
 			vim.api.nvim_win_close(win, true)
+		end
+		if vim.api.nvim_buf_is_valid(buf) then
+			vim.api.nvim_buf_delete(buf, { force = true })
 		end
 	end
 
 	vim.keymap.set("n", "q", close_menu, { buffer = buf, nowait = true })
 	vim.keymap.set("n", "<Esc>", close_menu, { buffer = buf, nowait = true })
 
-	vim.keymap.set("n", "<CR>", function()
-		if #items == 0 then
-			return
-		end
+	vim.api.nvim_create_autocmd("BufWriteCmd", {
+		buffer = buf,
+		callback = function()
+			save_menu()
+			vim.bo[buf].modified = false
+			close_menu()
+		end,
+	})
 
+	vim.keymap.set("n", "<CR>", function()
 		local selected = vim.api.nvim_win_get_cursor(win)[1]
+		save_menu()
 		close_menu()
 		list:select(selected)
 	end, { buffer = buf, nowait = true })
 
-	for i = 1, math.min(#items, 9) do
+	for i = 1, math.min(list:length(), 9) do
 		vim.keymap.set("n", tostring(i), function()
+			save_menu()
 			close_menu()
 			list:select(i)
 		end, { buffer = buf, nowait = true })

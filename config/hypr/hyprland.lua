@@ -1,7 +1,9 @@
 -- MONITORS
 hl.monitor({ output = "desc:ASUSTek COMPUTER INC VG249Q3A S5LMTF021455", mode = "1920x1080@180", position = "0x0",    scale = "1" })
 hl.monitor({ output = "desc:Acer Technologies Acer H236HL LX1AA0044210", mode = "1920x1080@60",  position = "1920x0", scale = "1" })
-hl.monitor({ output = "eDP-1",                                            mode = "2560x1600@165", position = "3840x0", scale = "1.6" })
+hl.monitor({ output = "eDP-1",                                            mode = "2560x1600@165", position = "3840x0", scale = "1.25" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036497",    mode = "1920x1080@60",  position = "5888x0", scale = "0.8" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036502",    mode = "1920x1080@60",  position = "8288x0", scale = "0.8" })
 hl.monitor({ output = "",                                                  mode = "preferred",     position = "auto",   scale = "auto" })
 
 -- PROGRAMS
@@ -18,6 +20,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("waybar")
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("swaync")
+    hl.exec_cmd("seaf-cli start")
 end)
 
 -- ENVIRONMENT
@@ -86,7 +89,7 @@ hl.config({
     },
 
     cursor = {
-        no_hardware_cursors = true,
+        no_hardware_cursors = 2,
     },
 
     input = {
@@ -154,6 +157,7 @@ hl.bind(mainMod .. " + P",               hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + SHIFT + F",       hl.dsp.window.fullscreen())
 
 -- Focus (hjkl)
+hl.bind(mainMod .. " + Tab", hl.dsp.focus({ workspace = "previous" }), { release = true })
 hl.bind(mainMod .. " + l", hl.dsp.focus({ direction = "right" }))
 hl.bind(mainMod .. " + h", hl.dsp.focus({ direction = "left"  }))
 hl.bind(mainMod .. " + j", hl.dsp.focus({ direction = "up"    }))
@@ -199,15 +203,45 @@ hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd(screenshot))
 hl.bind(mainMod .. " + SHIFT + u", hl.dsp.exec_cmd("~/.config/hypr/scripts/gaps.sh dec"), { locked = true, repeating = true })
 hl.bind(mainMod .. " + SHIFT + i", hl.dsp.exec_cmd("~/.config/hypr/scripts/gaps.sh inc"), { locked = true, repeating = true })
 
+local function client_exists(class)
+    for _, window in ipairs(hl.get_windows()) do
+        if window.class == class then
+            return true
+        end
+    end
+    return false
+end
+
+local function singleton_workspace(class, command, workspace)
+    return function()
+        if not client_exists(class) then
+            hl.exec_cmd(command)
+        end
+    hl.dispatch(hl.dsp.focus( {workspace = workspace }))
+    end
+end
+
 -- Steam singleton → workspace 1000
-hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(
-    "sh -c \"hyprctl clients | grep -q 'class: steam' || steam; hyprctl dispatch workspace 1000\""
-))
+hl.bind(
+    mainMod .. " + S", 
+    singleton_workspace("steam", "steam", "1000")
+)
 
 -- Jellyfin → workspace 999
-hl.bind(mainMod .. " + m", hl.dsp.exec_cmd(
-    "sh -c \"hyprctl clients | grep -q 'class: org.jellyfin.JellyfinDesktop' || jellyfin-desktop; hyprctl dispatch workspace 999\""
-))
+hl.bind(
+    mainMod .. " + m", 
+    singleton_workspace("org.jellyfin.JellyfinDesktop", "jellyfin-desktop", 999)
+)
+
+hl.bind(
+    mainMod .. " + w",
+    singleton_workspace("Slack", "slack", 998)
+)
+
+hl.bind(
+    mainMod .. " + n",
+    singleton_workspace("spotify", "spotify", 996)
+)
 
 -- WINDOW RULES
 hl.window_rule({
@@ -226,9 +260,9 @@ hl.window_rule({
     name   = "zoom-annotate-toolbar",
     match  = { class = "zoom", title = "annotate_toolbar" },
     float  = true,
-    size   = "950 120",
+    size   = "50 50",
     pin    = true,
-    move   = "20 monitor_h-window_h-20",
+    move   = "20 monitor_h-window_h-100",
 })
 
 hl.window_rule({
@@ -241,4 +275,16 @@ hl.window_rule({
     name      = "jellyfin",
     match     = { class = "org.jellyfin.JellyfinDesktop" },
     workspace = "999",
+})
+
+hl.window_rule({
+    name      = "slack",
+    match     = { class = "Slack" },
+    workspace = "998",
+})
+
+hl.window_rule({
+    name      = "spotify",
+    match     = { class = "spotify" },
+    workspace = "996",
 })

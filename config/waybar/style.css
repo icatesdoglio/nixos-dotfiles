@@ -20,6 +20,7 @@ window#waybar {
 #cpu,
 #custom-mem-cust,
 #custom-network,
+#custom-seafile,
 #pulseaudio {
   padding: 0px 8px;
   margin: 0px 2px;
@@ -48,6 +49,15 @@ window#waybar {
 
 #battery.critical {
   color: #f7768e;
+}
+
+#custom-seafile.offline,
+#custom-seafile.error {
+  color: #f7768e;
+}
+
+#custom-seafile.syncing {
+  color: #e0af68;
 }
 
 #custom-network.no-vpn {

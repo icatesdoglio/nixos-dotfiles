@@ -5,6 +5,42 @@
   ...
 }: let
   cfg = config.my.hm.programs.obsidian;
+  syncScript = pkgs.writeShellApplication {
+    name = "obsidian-vault-sync";
+    runtimeInputs = with pkgs; [
+      coreutils
+      git
+    ];
+    text = ''
+      set -euo pipefail
+
+      repo=${lib.escapeShellArg cfg.sync.repoDir}
+      commit_prefix=${lib.escapeShellArg cfg.sync.commitMessage}
+      lock_dir="''${XDG_RUNTIME_DIR:-/tmp}/obsidian-vault-sync.lock"
+
+      if ! mkdir "$lock_dir" 2>/dev/null; then
+          echo "obsidian-vault-sync: another sync is already running"
+          exit 0
+      fi
+      trap 'rmdir "$lock_dir"' EXIT
+
+      if ! git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+          echo "obsidian-vault-sync: $repo is not a git repository" >&2
+          exit 1
+      fi
+
+      git -C "$repo" pull --rebase --autostash
+      git -C "$repo" add -A
+
+      if git -C "$repo" diff --cached --quiet; then
+          echo "obsidian-vault-sync: no changes"
+          exit 0
+      fi
+
+      git -C "$repo" commit -m "$commit_prefix: $(date --iso-8601=seconds)"
+      git -C "$repo" push
+    '';
+  };
 in {
   options.my.hm.programs.obsidian = {
     enable = lib.mkEnableOption "Obsidian development workflow";
@@ -20,6 +56,28 @@ in {
       default = "${config.home.homeDirectory}/StochHedge";
       description = "Local StochHedge checkout used by note helpers.";
     };
+
+    sync = {
+      enable = lib.mkEnableOption "automatic Git sync for the Obsidian vault repository";
+
+      repoDir = lib.mkOption {
+        type = lib.types.str;
+        default = "${config.home.homeDirectory}/vaults";
+        description = "Git repository that contains Obsidian vaults.";
+      };
+
+      interval = lib.mkOption {
+        type = lib.types.str;
+        default = "10m";
+        description = "systemd OnUnitActiveSec interval for automatic vault sync.";
+      };
+
+      commitMessage = lib.mkOption {
+        type = lib.types.str;
+        default = "vault sync";
+        description = "Commit message prefix for automatic vault sync commits.";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -27,6 +85,7 @@ in {
       obsidian
       marksman
       glow
+      syncScript
     ];
 
     home.sessionVariables = {
@@ -44,10 +103,49 @@ in {
         ${lib.escapeShellArg cfg.vaultDir}/Templates
     '';
 
+    home.activation.ensureVaultGitignore = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      $DRY_RUN_CMD mkdir -p ${lib.escapeShellArg cfg.sync.repoDir}
+      $DRY_RUN_CMD touch ${lib.escapeShellArg cfg.sync.repoDir}/.gitignore
+      if ! grep -qxF '.obsidian' ${lib.escapeShellArg cfg.sync.repoDir}/.gitignore; then
+        $DRY_RUN_CMD sh -c 'echo .obsidian >> ${lib.escapeShellArg cfg.sync.repoDir}/.gitignore'
+      fi
+      if ! grep -qxF '.trash/' ${lib.escapeShellArg cfg.sync.repoDir}/.gitignore; then
+        $DRY_RUN_CMD sh -c 'echo .trash/ >> ${lib.escapeShellArg cfg.sync.repoDir}/.gitignore'
+      fi
+      if ! grep -qxF '.DS_Store' ${lib.escapeShellArg cfg.sync.repoDir}/.gitignore; then
+        $DRY_RUN_CMD sh -c 'echo .DS_Store >> ${lib.escapeShellArg cfg.sync.repoDir}/.gitignore'
+      fi
+    '';
+
+    systemd.user.services.obsidian-vault-sync = lib.mkIf cfg.sync.enable {
+      Unit = {
+        Description = "Sync Obsidian vaults with Git";
+        After = ["network-online.target"];
+        Wants = ["network-online.target"];
+      };
+
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${syncScript}/bin/obsidian-vault-sync";
+      };
+    };
+
+    systemd.user.timers.obsidian-vault-sync = lib.mkIf cfg.sync.enable {
+      Unit.Description = "Periodically sync Obsidian vaults with Git";
+
+      Timer = {
+        OnBootSec = "2m";
+        OnUnitActiveSec = cfg.sync.interval;
+        Unit = "obsidian-vault-sync.service";
+        Persistent = true;
+      };
+
+      Install.WantedBy = ["timers.target"];
+    };
+
     programs.bash = {
       shellAliases = {
         notes = "cd ${lib.escapeShellArg cfg.vaultDir}";
-        stochhedge = "cd ${lib.escapeShellArg cfg.stochhedgeRepo}";
       };
 
       initExtra = ''

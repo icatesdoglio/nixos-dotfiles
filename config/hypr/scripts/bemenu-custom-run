@@ -10,7 +10,7 @@ bemenu-run \
   -c -i -w -l 15 \
   --binding vim \
   --vim-esc-exits \
-  --margin 700 \
+  --margin 500 \
   --fn "JetBrainsMono Nerd Font 13" \
   --tb "$DIM" \
   --tf "$FG" \

@@ -184,6 +184,24 @@
 
   services.resolved.enable = false;
 
+  # wg0 must start after NM has connected so that:
+  #   (a) home.iancd.net can be resolved, and
+  #   (b) the NM dispatcher's `wg set` finds the interface already up.
+  # ExecStartPost handles the boot-time home-endpoint switch; the dispatcher
+  # script handles runtime network changes (leaving/joining home WiFi).
+  systemd.services.wireguard-wg0 = {
+    after = ["network-online.target" "nss-lookup.target"];
+    wants = ["network-online.target"];
+    serviceConfig.ExecStartPost = toString (pkgs.writeShellScript "wg0-home-endpoint" ''
+      SSID=$(${pkgs.networkmanager}/bin/nmcli -g 802-11-wireless.ssid \
+        connection show --active 2>/dev/null | head -1)
+      if [ "$SSID" = "Tomato Info" ]; then
+        ${pkgs.wireguard-tools}/bin/wg set wg0 peer "${hostRegistry.servemato.wgPublicKey}" \
+          endpoint "${hostRegistry.servemato.lanIP}:51820"
+      fi
+    '');
+  };
+
   /**
    ************
    Laptop Config
@@ -212,9 +230,14 @@
     mpv
     wineWow64Packages.stable
     seafile-client
+    seafile-shared
+    gst_all_1.gst-plugins-bad
+    gst_all_1.gst-vaapi
   ];
   hardware.enableAllFirmware = true;
   hardware.firmware = [pkgs.sof-firmware];
+
+  hardware.graphics.enable = true;
 
   /*
   TODO: Bug in nvidia code somewhere gets auto enabled

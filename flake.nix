@@ -92,6 +92,31 @@
 
           version = "0.14.0-icatesdoglio";
 
+          patches =
+            (old.patches or [])
+            ++ [
+              (builtins.toFile "waybar-hyprland-lua-workspaces.patch" ''
+                diff --git a/src/modules/hyprland/workspace.cpp b/src/modules/hyprland/workspace.cpp
+                index 83fb7d5..a2ab392 100644
+                --- a/src/modules/hyprland/workspace.cpp
+                +++ b/src/modules/hyprland/workspace.cpp
+                @@ -70,11 +70,8 @@ bool Workspace::handleClicked(GdkEventButton *bt) const {
+                   if (bt->type == GDK_BUTTON_PRESS) {
+                     try {
+                       if (id() > 0) {  // normal
+                -        if (m_workspaceManager.moveToMonitor()) {
+                -          m_ipc.getSocket1Reply("dispatch focusworkspaceoncurrentmonitor " + std::to_string(id()));
+                -        } else {
+                -          m_ipc.getSocket1Reply("dispatch workspace " + std::to_string(id()));
+                -        }
+                +        m_ipc.getSocket1Reply("dispatch hl.dsp.focus({ workspace = " + std::to_string(id()) +
+                +                              " })");
+                       } else if (!isSpecial()) {  // named (this includes persistent)
+                         if (m_workspaceManager.moveToMonitor()) {
+                           m_ipc.getSocket1Reply("dispatch focusworkspaceoncurrentmonitor name:" + name());
+              '')
+            ];
+
           mesonFlags =
             (old.mesonFlags or [])
             ++ [

@@ -130,6 +130,11 @@
     "/etc/nix/desktop-cache.key"
   ];
 
+  environment.systemPackages = with pkgs; [
+    seafile-client
+    seafile-shared
+  ];
+
   programs.steam = {
     enable = true;
     extraCompatPackages = with pkgs; [
