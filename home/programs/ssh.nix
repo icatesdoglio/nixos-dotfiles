@@ -29,6 +29,18 @@ in {
           IdentityFile = "~/.ssh/id_ed25519";
         };
 
+        racknerd = {
+          Hostname = "192.210.142.96";
+          User = "ian";
+          IdentityFile = "~/.ssh/id_ed25519";
+        };
+
+        mam-relay = {
+          Hostname = "192.210.142.96";
+          User = "ian";
+          IdentityFile = "~/.ssh/id_ed25519";
+        };
+
         gp-linux = {
           Hostname = "10.100.0.2";
           User = "ian";

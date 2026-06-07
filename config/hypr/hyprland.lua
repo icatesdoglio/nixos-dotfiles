@@ -89,8 +89,7 @@ hl.config({
     },
 
     cursor = {
-        no_hardware_cursors = true,
-        default_monitor     = "eDP-1",
+        no_hardware_cursors = 2,
     },
 
     input = {

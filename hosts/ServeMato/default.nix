@@ -4,7 +4,97 @@
   config,
   hostRegistry,
   ...
-}: {
+}: let
+  qbitCommon = {
+    savePath = "/data/torrents/complete";
+    tempPath = "/data/torrents/incomplete";
+    username = "admin";
+    password = "@ByteArray(dtUp2f8XJfCmPuwpvsTtYg==:oueaWDaKo2jY4wREKoAx9mDVGE5nTxVmehZXdYoG/+2zw32CevoVYbA9LYS5dYmsxouiH4mTn9txQJeKwbb99Q==)";
+    authSubnet = "192.168.0.0/24,10.100.0.0/24";
+  };
+
+  mkQbitConfig = {
+    interface,
+    interfaceAddress,
+    torrentingPort,
+    extraPrefs ? "",
+  }:
+    pkgs.writeText "qBittorrent.conf" ''
+      [BitTorrent]
+      Session\Port=${toString torrentingPort}
+
+      [LegalNotice]
+      Accepted=true
+
+      [Preferences]
+      Connection\Interface=${interface}
+      Connection\InterfaceAddress=${interfaceAddress}
+      Connection\PortRangeMin=${toString torrentingPort}
+      Connection\UPnP=false
+      Downloads\SavePath=${qbitCommon.savePath}
+      Downloads\TempPath=${qbitCommon.tempPath}
+      Downloads\TempPathEnabled=true
+      WebUI\AuthSubnetWhitelist=${qbitCommon.authSubnet}
+      WebUI\AuthSubnetWhitelistEnabled=false
+      WebUI\LocalHostAuth=false
+      WebUI\Password_PBKDF2="${qbitCommon.password}"
+      WebUI\Username=${qbitCommon.username}
+      ${extraPrefs}
+    '';
+
+  mkQbitService = {
+    user,
+    profileDir,
+    configFile,
+    webuiPort,
+    torrentingPort,
+    vpnService ? null,
+  }: let
+    vpnDeps = lib.optional (vpnService != null) vpnService;
+  in {
+    wants = ["network-online.target"] ++ vpnDeps;
+    after = ["local-fs.target" "network-online.target" "nss-lookup.target"] ++ vpnDeps;
+    wantedBy = ["multi-user.target"];
+    serviceConfig = {
+      Type = "simple";
+      User = user;
+      Group = "media";
+      UMask = "0002";
+      ExecStartPre = ''
+        ${pkgs.coreutils}/bin/install -Dm600 ${configFile} ${profileDir}/qBittorrent/config/qBittorrent.conf
+      '';
+      ExecStart = ''
+        ${pkgs.qbittorrent-nox}/bin/qbittorrent-nox --profile=${profileDir} --webui-port=${toString webuiPort} --torrenting-port=${toString torrentingPort}
+      '';
+      TimeoutStopSec = 1800;
+      PrivateTmp = false;
+      PrivateNetwork = false;
+      RemoveIPC = true;
+      NoNewPrivileges = true;
+      PrivateDevices = true;
+      PrivateUsers = true;
+      ProtectHome = "yes";
+      ProtectProc = "invisible";
+      ProcSubset = "pid";
+      ProtectSystem = "full";
+      ProtectClock = true;
+      ProtectHostname = true;
+      ProtectKernelLogs = true;
+      ProtectKernelModules = true;
+      ProtectKernelTunables = true;
+      ProtectControlGroups = true;
+      RestrictAddressFamilies = ["AF_INET" "AF_INET6" "AF_NETLINK"];
+      RestrictNamespaces = true;
+      RestrictRealtime = true;
+      RestrictSUIDSGID = true;
+      LockPersonality = true;
+      MemoryDenyWriteExecute = true;
+      SystemCallArchitectures = "native";
+      CapabilityBoundingSet = "";
+      SystemCallFilter = ["@system-service"];
+    };
+  };
+in {
   imports = [
     ./hardware-configuration.nix
   ];
@@ -136,6 +226,14 @@
     createHome = true;
   };
 
+  users.users."qbit-private" = {
+    isSystemUser = true;
+    uid = 990;
+    group = "media";
+    home = "/srv/qbit-private";
+    createHome = true;
+  };
+
   users.users.seafile = {
     isSystemUser = true;
     uid = 994;
@@ -191,6 +289,80 @@
         }
       '';
     };
+
+    virtualHosts."jellyfin.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:8096 {
+            header_up Host {host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-For {remote}
+        }
+      '';
+    };
+
+    virtualHosts."radarr.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:9697
+      '';
+    };
+
+    virtualHosts."sonarr.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:9698
+      '';
+    };
+
+    virtualHosts."prowlarr.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:9696
+      '';
+    };
+
+    virtualHosts."qbit.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:8081
+      '';
+    };
+
+    virtualHosts."bazarr.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:6767
+      '';
+    };
+
+    virtualHosts."readarr.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:8787
+      '';
+    };
+
+    virtualHosts."abs.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:13378
+      '';
+    };
+
+    virtualHosts."home.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:3000
+      '';
+    };
+
+    virtualHosts."pihole.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:8080
+      '';
+    };
   };
 
   networking.firewall.interfaces.eth0.allowedTCPPorts = [
@@ -214,6 +386,7 @@
     3000 # Home Page
     6767 # bazarr
     8081 # qBittorrent Web UI
+    8083 # qBittorrent MAM Web UI
     8096 # jellyfin
     8787 # readarr
     8787 # readarr
@@ -228,6 +401,12 @@
   ];
   networking.firewall.interfaces."ca-van".allowedTCPPorts = [
     51821 # Torrent port (TCP)
+  ];
+  networking.firewall.interfaces."wg-vps".allowedUDPPorts = [
+    51823 # MAM torrent port (UDP, DHT)
+  ];
+  networking.firewall.interfaces."wg-vps".allowedTCPPorts = [
+    51823 # MAM torrent port (TCP)
   ];
 
   /**
@@ -279,16 +458,56 @@
     };
     interfaces.wg-vps = {
       mode = "client";
+      table = "off";
+      allowedIPsAsRoutes = false;
       address = "10.200.0.2/32";
       privateKeyFile = config.sops.secrets."wg/vps/servemato".path;
       peers = {
         no-snow = {
           publicKey = "eN2zkAgSZJc4/sKnsWvGrFTVbDPUjn858lwSVPn2MGg=";
-          allowedIPs = ["10.200.0.1/32"];
+          allowedIPs = ["0.0.0.0/0"];
           endpoint = "192.210.142.96:51820";
           persistentKeepalive = 25;
         };
       };
+
+      postSetup = let
+        uid = toString config.users.users."qbit-private".uid;
+      in ''
+        ${pkgs.iproute2}/bin/ip rule del \
+        uidrange ${uid}-${uid} \
+        lookup 210 priority 1100 2>/dev/null || true
+
+        ${pkgs.iproute2}/bin/ip rule del \
+        uidrange ${uid}-${uid} \
+        blackhole priority 1101 2>/dev/null || true
+
+        ${pkgs.iproute2}/bin/ip route replace 10.200.0.1 dev wg-vps
+        ${pkgs.iproute2}/bin/ip route replace default dev wg-vps table 210
+
+        ${pkgs.iproute2}/bin/ip rule add \
+        uidrange ${uid}-${uid} \
+        lookup 210 priority 1100
+
+        ${pkgs.iproute2}/bin/ip rule add \
+        uidrange ${uid}-${uid} \
+        blackhole priority 1101
+      '';
+
+      postShutdown = let
+        uid = toString config.users.users."qbit-private".uid;
+      in ''
+        ${pkgs.iproute2}/bin/ip rule del \
+        uidrange ${uid}-${uid} \
+        lookup 210 priority 1100 || true
+
+        ${pkgs.iproute2}/bin/ip rule del \
+        uidrange ${uid}-${uid} \
+        blackhole priority 1101 || true
+
+        ${pkgs.iproute2}/bin/ip route del default dev wg-vps table 210 || true
+        ${pkgs.iproute2}/bin/ip route del 10.200.0.1 dev wg-vps || true
+      '';
     };
     interfaces.ca-van = {
       mode = "client";
@@ -399,7 +618,7 @@
   services.homepage-dashboard = {
     enable = true;
     listenPort = 3000;
-    allowedHosts = "10.100.0.1:3000";
+    allowedHosts = "home.servemato.lan";
 
     settings = {
       title = "ServeMato";
@@ -410,14 +629,14 @@
     services = [
       {
         Media = [
-          {Jellyfin = {href = "http://10.100.0.1:8096"; description = "Media server";};}
-          {Radarr = {href = "http://10.100.0.1:9697"; description = "Movies";};}
-          {Sonarr = {href = "http://10.100.0.1:9698"; description = "TV Shows";};}
-          {Readarr = {href = "http://10.100.0.1:8787"; description = "Audiobooks & Books";};}
-          {Audiobookshelf = {href = "http://10.100.0.1:13378"; description = "Audiobook & ebook library";};}
-          {Bazarr = {href = "http://10.100.0.1:6767"; description = "Subtitles";};}
-          {Prowlarr = {href = "http://10.100.0.1:9696"; description = "Indexers";};}
-          {qBittorrent = {href = "http://10.100.0.1:8081"; description = "Downloads";};}
+          {Jellyfin = {href = "https://jellyfin.servemato.lan"; description = "Media server";};}
+          {Radarr = {href = "https://radarr.servemato.lan"; description = "Movies";};}
+          {Sonarr = {href = "https://sonarr.servemato.lan"; description = "TV Shows";};}
+          {Readarr = {href = "https://readarr.servemato.lan"; description = "Audiobooks & Books";};}
+          {Audiobookshelf = {href = "https://abs.servemato.lan"; description = "Audiobook & ebook library";};}
+          {Bazarr = {href = "https://bazarr.servemato.lan"; description = "Subtitles";};}
+          {Prowlarr = {href = "https://prowlarr.servemato.lan"; description = "Indexers";};}
+          {qBittorrent = {href = "https://qbit.servemato.lan"; description = "Downloads";};}
         ];
       }
       {
@@ -427,56 +646,38 @@
       }
       {
         Infrastructure = [
-          {"Pi-hole" = {href = "http://10.100.0.1:8080"; description = "DNS";};}
+          {"Pi-hole" = {href = "https://pihole.servemato.lan"; description = "DNS";};}
         ];
       }
     ];
   };
 
-  systemd.services.qbittorrent.serviceConfig.UMask = "0002";
-
-  services.qbittorrent = {
-    enable = true;
+  systemd.services.qbittorrent-public = mkQbitService {
     user = "qbit";
-    group = "media";
     profileDir = "/srv/qbit";
-
     webuiPort = 8081;
     torrentingPort = 51821;
+    configFile = mkQbitConfig {
+      interface = "ca-van";
+      interfaceAddress = "10.14.0.2";
+      torrentingPort = 51821;
+      extraPrefs = ''
+        Bittorrent\MaxRatio=2.0
+        Bittorrent\MaxRatioAction=0
+      '';
+    };
+  };
 
-    openFirewall = false; # more restrictive setup
-
-    serverConfig = {
-      /*
-      download paths
-      */
-      Downloads.SavePath = "/data/torrents";
-      Downloads.TempPath = "/data/torrents/incomplete";
-      Downloads.TempPathEnabled = true;
-
-      Preferences.WebUI.Username = "admin";
-      Preferences.WebUI.Password_PBKDF2 = "@ByteArray(dtUp2f8XJfCmPuwpvsTtYg==:oueaWDaKo2jY4wREKoAx9mDVGE5nTxVmehZXdYoG/+2zw32CevoVYbA9LYS5dYmsxouiH4mTn9txQJeKwbb99Q==)";
-      Preferences."Connection\\Interface" = "ca-van";
-      Preferences."Connection\\InterfaceAddress" = "10.14.0.2";
-
-      /*
-      security / sanity
-      */
-      Preferences.WebUI.LocalHostAuth = false;
-      Preferences.WebUI.AuthSubnetWhitelistEnabled = false;
-      Preferences.WebUI.AuthSubnetWhitelist = "192.168.0.0/24,10.100.0.0/24";
-
-      /*
-      optional: don’t expose upnp
-      */
-      Preferences.Connection.UPnP = false;
-      LegalNotice.Accepted = true;
-
-      /*
-      seeding limits
-      */
-      Preferences.Bittorrent.MaxRatio = 2.0;
-      Preferences.Bittorrent.MaxRatioAction = 0; # 0 = pause torrent
+  systemd.services.qbittorrent-private = mkQbitService {
+    user = "qbit-private";
+    profileDir = "/srv/qbit-private";
+    webuiPort = 8083;
+    torrentingPort = 51823;
+    vpnService = "wireguard-wg-vps.service";
+    configFile = mkQbitConfig {
+      interface = "wg-vps";
+      interfaceAddress = "10.200.0.2";
+      torrentingPort = 51823;
     };
   };
 
@@ -725,8 +926,15 @@ XML
     "z /srv 0770 root media -"
     "z /data 0770 root media -"
 
-    "d /data/torrents 0770 qbit media -"
-    "d /data/torrents/incomplete 0770 qbit media -"
+    "d /data/torrents 0770 root media -"
+    "d /data/torrents/complete 0770 root media -"
+    "d /data/torrents/incomplete 0770 root media -"
+    "d /srv/qbit 0755 qbit media -"
+    "d /srv/qbit/qBittorrent 0755 qbit media -"
+    "d /srv/qbit/qBittorrent/config 0755 qbit media -"
+    "d /srv/qbit-private 0755 qbit-private media -"
+    "d /srv/qbit-private/qBittorrent 0755 qbit-private media -"
+    "d /srv/qbit-private/qBittorrent/config 0755 qbit-private media -"
     "d /data/media/movies 0770 root media -"
     "d /data/media/tv 0770 root media -"
 
