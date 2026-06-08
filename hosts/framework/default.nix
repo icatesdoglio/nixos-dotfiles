@@ -226,7 +226,8 @@
     pavucontrol
     spotify
     dig
-    jellyfin-desktop
+    jellyfin-media-player
+    jellyfin-mpv-shim
     mpv
     wineWow64Packages.stable
     seafile-client

@@ -1,9 +1,9 @@
 -- MONITORS
-hl.monitor({ output = "desc:ASUSTek COMPUTER INC VG249Q3A S5LMTF021455", mode = "1920x1080@180", position = "0x0",    scale = "1" })
-hl.monitor({ output = "desc:Acer Technologies Acer H236HL LX1AA0044210", mode = "1920x1080@60",  position = "1920x0", scale = "1" })
-hl.monitor({ output = "eDP-1",                                            mode = "2560x1600@165", position = "3840x0", scale = "1.25" })
-hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036497",    mode = "1920x1080@60",  position = "5888x0", scale = "0.8" })
-hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036502",    mode = "1920x1080@60",  position = "8288x0", scale = "0.8" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VG249Q3A S5LMTF021455", mode = "1920x1080@180", position = "0x0",    scale = "0.9" })
+hl.monitor({ output = "desc:Acer Technologies Acer H236HL LX1AA0044210", mode = "1920x1080@60",  position = "1920x0", scale = "0.9" })
+hl.monitor({ output = "eDP-1",                                            mode = "2560x1600@165", position = "3840x0", scale = "1.33" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036497",    mode = "1920x1080@60",  position = "5888x0", scale = "0.9" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036502",    mode = "1920x1080@60",  position = "8288x0", scale = "0.9" })
 hl.monitor({ output = "",                                                  mode = "preferred",     position = "auto",   scale = "auto" })
 
 -- PROGRAMS
@@ -21,6 +21,22 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("swaync")
     hl.exec_cmd("seaf-cli start")
+    hl.exec_cmd("jellyfin-mpv-shim")
+end)
+
+hl.on("window.open", function(win)
+    if win.class == "mpv" then
+        hl.exec_cmd("hyprctl dispatch focuswindow class:mpv")
+    end
+end)
+
+hl.on("window.close", function(win)
+    if win.class == "mpv" then
+        local jellyfin = hl.get_windows({ class = "org.jellyfin.JellyfinDesktop" })
+        if #jellyfin > 0 then
+            hl.exec_cmd("hyprctl dispatch focuswindow class:org.jellyfin.JellyfinDesktop")
+        end
+    end
 end)
 
 -- ENVIRONMENT
@@ -212,36 +228,36 @@ local function client_exists(class)
     return false
 end
 
-local function singleton_workspace(class, command, workspace)
+local function register_singleton(class, command, workspace)
+    hl.window_rule({
+        match     = { class = class },
+        workspace = tostring(workspace),
+    })
     return function()
         if not client_exists(class) then
             hl.exec_cmd(command)
         end
-    hl.dispatch(hl.dsp.focus( {workspace = workspace }))
+        hl.dispatch(hl.dsp.focus({ workspace = workspace }))
     end
 end
 
--- Steam singleton → workspace 1000
-hl.bind(
-    mainMod .. " + S", 
-    singleton_workspace("steam", "steam", "1000")
-)
+hl.bind(mainMod .. " + S", register_singleton("steam",                       "steam",    1000))
+hl.bind(mainMod .. " + w", register_singleton("Slack",                       "slack",     998))
+hl.bind(mainMod .. " + n", register_singleton("spotify",                     "spotify",   996))
 
--- Jellyfin → workspace 999
-hl.bind(
-    mainMod .. " + m", 
-    singleton_workspace("org.jellyfin.JellyfinDesktop", "jellyfin-desktop", 999)
-)
+-- Media → workspace 999 (MPV if playing, else Jellyfin)
+local focus_jellyfin = register_singleton("org.jellyfin.JellyfinDesktop", "jellyfin-desktop", 999)
+hl.window_rule({ match = { class = "mpv" }, workspace = "999" })
 
-hl.bind(
-    mainMod .. " + w",
-    singleton_workspace("Slack", "slack", 998)
-)
-
-hl.bind(
-    mainMod .. " + n",
-    singleton_workspace("spotify", "spotify", 996)
-)
+hl.bind(mainMod .. " + m", function()
+    local mpv = hl.get_windows({ class = "mpv" })
+    if #mpv > 0 then
+        hl.exec_cmd("hyprctl dispatch focuswindow class:mpv")
+        hl.dispatch(hl.dsp.focus({ workspace = 999 }))
+    else
+        focus_jellyfin()
+    end
+end)
 
 -- WINDOW RULES
 hl.window_rule({
@@ -265,26 +281,3 @@ hl.window_rule({
     move   = "20 monitor_h-window_h-100",
 })
 
-hl.window_rule({
-    name      = "steam",
-    match     = { class = "steam" },
-    workspace = "1000",
-})
-
-hl.window_rule({
-    name      = "jellyfin",
-    match     = { class = "org.jellyfin.JellyfinDesktop" },
-    workspace = "999",
-})
-
-hl.window_rule({
-    name      = "slack",
-    match     = { class = "Slack" },
-    workspace = "998",
-})
-
-hl.window_rule({
-    name      = "spotify",
-    match     = { class = "spotify" },
-    workspace = "996",
-})
