@@ -240,6 +240,7 @@ in {
     group = "media";
   };
 
+
   users.users.seafile = {
     isSystemUser = true;
     uid = 994;
@@ -369,12 +370,21 @@ in {
         reverse_proxy 127.0.0.1:8080
       '';
     };
+
+    virtualHosts."tdarr.servemato.lan" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:8265
+      '';
+    };
   };
 
   networking.firewall.interfaces.eth0.allowedTCPPorts = [
     22 # SSH
     53 # DNS
+    2049 # NFS
     8096 # jellyfin
+    8266 # tdarr server (node connections from gp-linux)
   ];
   networking.firewall.interfaces.eth0.allowedUDPPorts = [
     51820 # Wireguard
@@ -645,6 +655,7 @@ in {
           {Bazarr = {href = "https://bazarr.servemato.lan"; description = "Subtitles";};}
           {Prowlarr = {href = "https://prowlarr.servemato.lan"; description = "Indexers";};}
           {qBittorrent = {href = "https://qbit.servemato.lan"; description = "Downloads";};}
+          {Tdarr = {href = "https://tdarr.servemato.lan"; description = "Transcoding";};}
         ];
       }
       {
@@ -740,6 +751,14 @@ in {
       };
     };
   };
+
+  services.nfs.server = {
+    enable = true;
+    exports = ''
+      /data/media 192.168.0.20(rw,sync,no_subtree_check,no_root_squash)
+    '';
+  };
+
 
   services.jellyfin = {
     enable = true;
@@ -851,6 +870,27 @@ XML
 
   systemd.services.bazarr.serviceConfig.SupplementaryGroups = ["media"];
 
+  environment.etc."tdarr/docker-compose.yml".text = ''
+    services:
+      tdarr:
+        image: ghcr.io/haveagitgat/tdarr:latest
+        ports:
+          - "127.0.0.1:8265:8265"
+          - "8266:8266"
+        volumes:
+          - /srv/tdarr:/app/server
+          - /data/media:/data/media
+        environment:
+          PUID: "1000"
+          PGID: "985"
+          serverPort: "8266"
+          webUIPort: "8265"
+          rootDataPath: /app/server
+          ffmpegPath: /usr/bin/ffmpeg
+          openBrowser: "false"
+        restart: unless-stopped
+  '';
+
   environment.etc."seafile/docker-compose.yml".text = ''
     services:
       db:
@@ -896,6 +936,20 @@ XML
     networks:
       seafile-net:
   '';
+
+  systemd.services.tdarr = {
+    description = "Tdarr Transcoding Server";
+    after = ["podman.socket" "network-online.target"];
+    requires = ["podman.socket"];
+    wants = ["network-online.target"];
+    wantedBy = ["multi-user.target"];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.docker-compose}/bin/docker-compose -f /etc/tdarr/docker-compose.yml up -d";
+      ExecStop = "${pkgs.docker-compose}/bin/docker-compose -f /etc/tdarr/docker-compose.yml down";
+    };
+  };
 
   systemd.services.seafile = {
     description = "Seafile Compose Stack";
@@ -962,6 +1016,7 @@ XML
     "d /srv/sonarr 0770 sonarr media -"
     "d /srv/bazarr 0770 root media -"
 
+    "d /srv/tdarr 0770 root media -"
     "d /srv/jellyfin 0770 jellyfin media -"
     "d /srv/jellyfin/data 0770 jellyfin media -"
     "d /srv/jellyfin/config 0770 jellyfin media -"

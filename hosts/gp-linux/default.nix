@@ -72,6 +72,76 @@
 
   my.services.ssh.enable = true;
 
+  users.groups.media = {gid = 985;};
+
+  users.users.tdarr = {
+    isSystemUser = true;
+    uid = 988;
+    group = "tdarr";
+    extraGroups = ["media"];
+  };
+
+  users.groups.tdarr = {};
+
+  fileSystems."/data/media" = {
+    device = "192.168.0.30:/data/media";
+    fsType = "nfs";
+    options = ["nfsvers=4.1" "noauto" "x-systemd.automount" "x-systemd.idle-timeout=600"];
+  };
+
+  systemd.services.tdarr-server = {
+    description = "Tdarr Media Transcoding Server";
+    after = ["network-online.target"];
+    wants = ["network-online.target"];
+    wantedBy = ["multi-user.target"];
+    environment = {
+      serverPort = "8266";
+      webUIPort = "8265";
+      rootDataPath = "/var/lib/tdarr/server";
+      ffmpegPath = "${pkgs.ffmpeg}/bin/ffmpeg";
+      ffprobePath = "${pkgs.ffmpeg}/bin/ffprobe";
+      handbrakePath = "${pkgs.handbrake}/bin/HandBrakeCLI";
+      openBrowser = "false";
+    };
+    serviceConfig = {
+      Type = "simple";
+      User = "tdarr";
+      Group = "tdarr";
+      ExecStart = "${pkgs.tdarr-server}/bin/tdarr-server";
+      Restart = "on-failure";
+      RestartSec = "5s";
+      StateDirectory = "tdarr/server";
+      WorkingDirectory = "/var/lib/tdarr/server";
+    };
+  };
+
+  systemd.services.tdarr-node = {
+    description = "Tdarr Media Transcoding Node";
+    after = ["network-online.target" "data-media.mount"];
+    wants = ["network-online.target"];
+    wantedBy = ["multi-user.target"];
+    environment = {
+      serverURL = "http://192.168.0.30:8266";
+      nodeName = "gp-linux";
+      transcodegpuWorkers = "1";
+      transcodecpuWorkers = "2";
+      healthcheckcpuWorkers = "1";
+      rootDataPath = "/var/lib/tdarr/nodes/gp-linux";
+      ffmpegPath = "${pkgs.ffmpeg}/bin/ffmpeg";
+      ffprobePath = "${pkgs.ffmpeg}/bin/ffprobe";
+    };
+    serviceConfig = {
+      Type = "simple";
+      User = "tdarr";
+      Group = "media";
+      ExecStart = "${pkgs.tdarr-node}/bin/tdarr-node";
+      Restart = "on-failure";
+      RestartSec = "5s";
+      StateDirectory = "tdarr/nodes/gp-linux";
+      WorkingDirectory = "/var/lib/tdarr/nodes/gp-linux";
+    };
+  };
+
   networking.networkmanager.ensureProfiles.profiles."lan-static" = {
     connection = {
       id = "lan-static";
