@@ -234,6 +234,12 @@ in {
     createHome = true;
   };
 
+  users.users.jellyfin = {
+    isSystemUser = true;
+    uid = 992;
+    group = "media";
+  };
+
   users.users.seafile = {
     isSystemUser = true;
     uid = 994;
@@ -368,6 +374,7 @@ in {
   networking.firewall.interfaces.eth0.allowedTCPPorts = [
     22 # SSH
     53 # DNS
+    8096 # jellyfin
   ];
   networking.firewall.interfaces.eth0.allowedUDPPorts = [
     51820 # Wireguard
@@ -587,6 +594,7 @@ in {
       "pihole-ftl.service"
     ];
     wants = ["network-online.target"];
+    wantedBy = ["multi-user.target"];
   };
   systemd.services.unbound = {
     after = ["network.target"];
