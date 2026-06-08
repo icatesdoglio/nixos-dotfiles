@@ -873,7 +873,7 @@ XML
   environment.etc."tdarr/docker-compose.yml".text = ''
     services:
       tdarr:
-        image: ghcr.io/haveagitgat/tdarr:latest
+        image: ghcr.io/haveagitgat/tdarr:2.74.01
         ports:
           - "127.0.0.1:8265:8265"
           - "8266:8266"
@@ -886,7 +886,6 @@ XML
           serverPort: "8266"
           webUIPort: "8265"
           rootDataPath: /app/server
-          ffmpegPath: /usr/bin/ffmpeg
           openBrowser: "false"
         restart: unless-stopped
   '';

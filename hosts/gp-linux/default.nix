@@ -72,7 +72,10 @@
 
   my.services.ssh.enable = true;
 
-  users.groups.media = {gid = 985;};
+  users.groups.media = {
+    gid = 985;
+    members = ["ian"];
+  };
 
   users.users.tdarr = {
     isSystemUser = true;
