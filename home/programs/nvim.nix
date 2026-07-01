@@ -26,6 +26,9 @@ in {
         pyright
         marksman
         lua-language-server
+        postgresql
+        databricks-cli
+        databricks-sql-cli
       ];
       plugins = with pkgs.vimPlugins; [
         nvim-treesitter
@@ -38,6 +41,9 @@ in {
         friendly-snippets
         vim-fugitive
         vim-slime
+        vim-dadbod
+        vim-dadbod-ui
+        vim-dadbod-completion
       ];
 
       viAlias = true;

@@ -86,6 +86,21 @@
   }: let
     overlays = [
       (import neovim-nightly-overlay)
+      (_final: prev: {
+        citrix-workspace = prev.citrix-workspace.overrideAttrs (old: {
+          version = "26.04.0.105";
+          src = prev.requireFile {
+            name = "linuxx64-gcc-8-26.04.0.105.tar.gz";
+            sha256 = "1aqqi0slms2qyq7qh4zgaj24896s9al1rvy1avsj6clv40v71v5g";
+            url = "https://www.citrix.com/downloads/workspace-app/";
+          };
+          autoPatchelfIgnoreMissingDeps = [
+            "libwebkit2gtk-4.0.so.37"
+            "libsoup-2.4.so.1"
+            "libjavascriptcoregtk-4.0.so.18"
+          ];
+        });
+      })
       (final: prev: {
         waybar = prev.waybar.overrideAttrs (old: {
           src = waybar-icatesdoglio;

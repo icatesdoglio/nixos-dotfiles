@@ -108,6 +108,39 @@
     '';
   };
 
+  networking.wg-quick.interfaces.us-bos = {
+    address = ["10.14.0.2/16"];
+    autostart = false;
+
+    privateKeyFile = config.sops.secrets."wg/surfshark/framework".path;
+
+    table = "51820";
+
+    dns = ["162.252.172.57" "149.154.159.92"];
+
+    extraOptions = {
+      fwmark = 51820;
+    };
+
+    peers = [
+      {
+        publicKey = "V0vpMcp0/586Y/q1EzW9PhM45JhypnCYgmrP0rzDEVw=";
+        allowedIPs = ["0.0.0.0/0"];
+        endpoint = "us-bos.prod.surfshark.com:51820";
+        persistentKeepalive = 25;
+      }
+    ];
+    postUp = ''
+      ip rule add not fwmark 51820 lookup 51820
+      ip rule add lookup main suppress_prefixlength 0
+    '';
+
+    postDown = ''
+      ip rule del not fwmark 51820 lookup 51820 || true
+      ip rule del lookup main suppress_prefixlength 0 || true
+    '';
+  };
+
   my.networking.ipv6.method = "ignore";
   networking.nat.enable = true;
   networking.nat.externalInterface = "wlan0";
@@ -120,6 +153,7 @@
   '';
 
   my.services.ssh.enable = true;
+  my.services.docker.enable = true;
 
   networking.networkmanager.enable = true;
   networking.networkmanager.wifi.backend = "iwd";
@@ -190,8 +224,8 @@
   # ExecStartPost handles the boot-time home-endpoint switch; the dispatcher
   # script handles runtime network changes (leaving/joining home WiFi).
   systemd.services.wireguard-wg0 = {
-    after = ["network-online.target" "nss-lookup.target"];
-    wants = ["network-online.target"];
+    after = ["NetworkManager-wait-online.service" "nss-lookup.target"];
+    wants = ["NetworkManager-wait-online.service"];
     serviceConfig.ExecStartPost = toString (pkgs.writeShellScript "wg0-home-endpoint" ''
       SSID=$(${pkgs.networkmanager}/bin/nmcli -g 802-11-wireless.ssid \
         connection show --active 2>/dev/null | head -1)
@@ -224,6 +258,7 @@
     alsa-utils
     pulseaudio
     pavucontrol
+    citrix-workspace
     spotify
     dig
     jellyfin-media-player

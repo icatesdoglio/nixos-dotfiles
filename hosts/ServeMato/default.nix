@@ -406,11 +406,11 @@ in {
     8083 # qBittorrent MAM Web UI
     8096 # jellyfin
     8787 # readarr
-    8787 # readarr
     13378 # audiobookshelf
     9696 # prowlarr
     9697 # radarr
     9698 # sonarr
+    8191 # flaresolverr
     51821 # Torrent port (TCP)
   ];
   networking.firewall.interfaces."ca-van".allowedUDPPorts = [
@@ -683,6 +683,7 @@ in {
       extraPrefs = ''
         Bittorrent\MaxRatio=2.0
         Bittorrent\MaxRatioAction=0
+        BitTorrent\Session\MaxActiveUploads=50
       '';
     };
   };
@@ -697,6 +698,9 @@ in {
       interface = "wg-vps";
       interfaceAddress = "10.200.0.2";
       torrentingPort = 51823;
+      extraPrefs = ''
+        BitTorrent\Session\MaxActiveUploads=50
+      '';
     };
   };
 
@@ -869,6 +873,31 @@ XML
   '');
 
   systemd.services.bazarr.serviceConfig.SupplementaryGroups = ["media"];
+
+  environment.etc."flaresolverr/docker-compose.yml".text = ''
+    services:
+      flaresolverr:
+        image: ghcr.io/flaresolverr/flaresolverr:latest
+        ports:
+          - "127.0.0.1:8191:8191"
+        environment:
+          LOG_LEVEL: info
+        restart: unless-stopped
+  '';
+
+  systemd.services.flaresolverr = {
+    description = "FlareSolverr Proxy";
+    after = ["podman.socket" "network-online.target"];
+    requires = ["podman.socket"];
+    wants = ["network-online.target"];
+    wantedBy = ["multi-user.target"];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.docker-compose}/bin/docker-compose -f /etc/flaresolverr/docker-compose.yml up -d";
+      ExecStop = "${pkgs.docker-compose}/bin/docker-compose -f /etc/flaresolverr/docker-compose.yml down";
+    };
+  };
 
   environment.etc."tdarr/docker-compose.yml".text = ''
     services:

@@ -34,7 +34,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking',
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function()
-    vim.hl.on_yank()
+    vim.hl.hl_op()
   end,
 })
 
@@ -205,7 +205,7 @@ blink.setup({
     },
     completion = { documentation = { auto_show = true } },
     sources = {
-        default = { "lsp", "path", "snippets", "buffer", "github_issues" },
+        default = { "lsp", "path", "snippets", "buffer", "github_issues", "dadbod" },
         providers = {
             github_issues = {
                 name = "GH Issues",
@@ -214,6 +214,13 @@ blink.setup({
                     return gh_issues.is_git_buffer()
                 end,
                 score_offset = 5,
+            },
+            dadbod = {
+                name = "Dadbod",
+                module = "vim_dadbod_completion.blink",
+                enabled = function()
+                    return vim.bo.filetype == "sql" or vim.bo.filetype == "mysql"
+                end,
             },
         },
     },
@@ -404,3 +411,37 @@ vim.keymap.set("n", "<leader>r", function()
     local f = vim.fn.expand("%:p")
     vim.fn.system("tmux send-keys -t repl:0.0 '%run " .. f .. "' Enter")
 end, { desc = "[R]un file in REPL" })
+
+-- DADBOD / DATABASE UI
+vim.g.db_ui_use_nerd_fonts = 1
+vim.g.db_ui_save_location = vim.fn.expand("~/.local/share/db_ui")
+
+-- Calls `databricks auth token` (which transparently refreshes via the stored
+-- refresh token), then injects the result into the environment so psql/dbsqlcli
+-- pick it up without the token ever being baked into a stored connection URL.
+local function databricks_refresh()
+    local raw = vim.fn.system("databricks auth token --output json 2>/dev/null")
+    if vim.v.shell_error ~= 0 then
+        vim.notify("databricks auth token failed — run `databricks auth login` first", vim.log.levels.ERROR)
+        return false
+    end
+    local ok, parsed = pcall(vim.json.decode, raw)
+    if not ok or not parsed or not parsed.access_token then
+        vim.notify("databricks: could not parse token JSON", vim.log.levels.ERROR)
+        return false
+    end
+    vim.env.PGPASSWORD = parsed.access_token        -- picked up by psql / Lakebase
+    vim.env.DATABRICKS_TOKEN = parsed.access_token  -- picked up by dbsqlcli
+    return true
+end
+
+-- Refresh token on every open so a stale hour-old token is never used.
+vim.keymap.set("n", "<leader>db", function()
+    if databricks_refresh() then vim.cmd("DBUIToggle") end
+end, { desc = "[D]ata[b]ase UI" })
+
+vim.api.nvim_create_user_command("DatabricksLogin", function()
+    vim.fn.system("databricks auth login")
+    databricks_refresh()
+    vim.notify("Databricks: authenticated and token injected", vim.log.levels.INFO)
+end, { desc = "Databricks OAuth login + refresh" })
