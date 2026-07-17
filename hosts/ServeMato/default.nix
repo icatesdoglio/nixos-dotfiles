@@ -269,7 +269,7 @@ in {
   my.networking.pihole = {
     enable = true;
     hostIP = "10.100.0.1";
-    wildcardDomains = ["servemato.lan"];
+    wildcardDomains = ["servemato.iancd.net"];
     # Explicit bind prevents dnsmasq from grabbing 0.0.0.0:53, which
     # conflicts with podman aardvark-dns on container bridge IPs.
     listenAddresses = ["127.0.0.1" "192.168.0.30" "10.100.0.1"];
@@ -284,100 +284,87 @@ in {
       (lib.filterAttrs (_: h: h ? lanIP) hostRegistry));
   services.caddy = {
     enable = true;
+    package = pkgs.caddy.withPlugins {
+      plugins = ["github.com/caddy-dns/cloudflare@v0.2.1"];
+      # Run `nixos-rebuild build` with this placeholder — the error will print
+      # the correct hash; paste it here and rebuild again.
+      hash = "sha256-+nSmZNTdPv7d/T7qijkggyAf77RP17M6j4Cez/oha8Q=";
+    };
 
-    virtualHosts."seafile.servemato.lan" = {
-      extraConfig = ''
-        tls internal
+    globalConfig = ''
+      email iancatesdoglio@gmail.com
+    '';
 
-        reverse_proxy 127.0.0.1:8082 {
+    extraConfig = ''
+      *.servemato.iancd.net {
+        tls {
+          dns cloudflare {$CLOUDFLARE_API_TOKEN}
+        }
+
+        @seafile  host seafile.servemato.iancd.net
+        @jellyfin host jellyfin.servemato.iancd.net
+        @radarr   host radarr.servemato.iancd.net
+        @sonarr   host sonarr.servemato.iancd.net
+        @prowlarr host prowlarr.servemato.iancd.net
+        @qbit     host qbit.servemato.iancd.net
+        @bazarr   host bazarr.servemato.iancd.net
+        @readarr  host readarr.servemato.iancd.net
+        @abs      host abs.servemato.iancd.net
+        @home     host home.servemato.iancd.net
+        @pihole   host pihole.servemato.iancd.net
+        @tdarr    host tdarr.servemato.iancd.net
+
+        handle @seafile {
+          reverse_proxy 127.0.0.1:8082 {
             header_up Host {host}
             header_up X-Forwarded-Proto {scheme}
             header_up X-Forwarded-For {remote}
+          }
         }
-      '';
-    };
-
-    virtualHosts."jellyfin.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:8096 {
+        handle @jellyfin {
+          reverse_proxy 127.0.0.1:8096 {
             header_up Host {host}
             header_up X-Forwarded-Proto {scheme}
             header_up X-Forwarded-For {remote}
+          }
         }
-      '';
-    };
+        handle @radarr   { reverse_proxy 127.0.0.1:9697 }
+        handle @sonarr   { reverse_proxy 127.0.0.1:9698 }
+        handle @prowlarr { reverse_proxy 127.0.0.1:9696 }
+        handle @qbit     { reverse_proxy 127.0.0.1:8081 }
+        handle @bazarr   { reverse_proxy 127.0.0.1:6767 }
+        handle @readarr  { reverse_proxy 127.0.0.1:8787 }
+        handle @abs      { reverse_proxy 127.0.0.1:13378 }
+        handle @home     { reverse_proxy 127.0.0.1:3000 }
+        handle @pihole   { reverse_proxy 127.0.0.1:8080 }
+        handle @tdarr    { reverse_proxy 127.0.0.1:8265 }
 
-    virtualHosts."radarr.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:9697
-      '';
-    };
+        handle { respond 404 }
+      }
+    '';
+  };
 
-    virtualHosts."sonarr.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:9698
-      '';
-    };
-
-    virtualHosts."prowlarr.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:9696
-      '';
-    };
-
-    virtualHosts."qbit.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:8081
-      '';
-    };
-
-    virtualHosts."bazarr.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:6767
-      '';
-    };
-
-    virtualHosts."readarr.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:8787
-      '';
-    };
-
-    virtualHosts."abs.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:13378
-      '';
-    };
-
-    virtualHosts."home.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:3000
-      '';
-    };
-
-    virtualHosts."pihole.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:8080
-      '';
-    };
-
-    virtualHosts."tdarr.servemato.lan" = {
-      extraConfig = ''
-        tls internal
-        reverse_proxy 127.0.0.1:8265
+  # Write the Cloudflare API token into an env file readable by the caddy user
+  # before caddy starts. EnvironmentFiles is cleaner than embedding secrets in
+  # the Caddyfile or in systemd Environment= (which shows up in `systemctl show`).
+  systemd.services.caddy-env = {
+    description = "Prepare Caddy Cloudflare token";
+    requiredBy = ["caddy.service"];
+    before = ["caddy.service"];
+    after = ["sops-nix.service"];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "caddy-env-setup" ''
+        install -m 640 /dev/null /run/caddy-cf.env
+        chown root:caddy /run/caddy-cf.env
+        printf 'CLOUDFLARE_API_TOKEN=%s\n' \
+          "$(cat ${config.sops.secrets."cloudflare/api_key".path})" \
+          > /run/caddy-cf.env
       '';
     };
   };
+  systemd.services.caddy.serviceConfig.EnvironmentFile = ["/run/caddy-cf.env"];
 
   networking.firewall.interfaces.eth0.allowedTCPPorts = [
     22 # SSH
@@ -636,7 +623,7 @@ in {
   services.homepage-dashboard = {
     enable = true;
     listenPort = 3000;
-    allowedHosts = "home.servemato.lan";
+    allowedHosts = "home.servemato.iancd.net";
 
     settings = {
       title = "ServeMato";
@@ -647,25 +634,25 @@ in {
     services = [
       {
         Media = [
-          {Jellyfin = {href = "https://jellyfin.servemato.lan"; description = "Media server";};}
-          {Radarr = {href = "https://radarr.servemato.lan"; description = "Movies";};}
-          {Sonarr = {href = "https://sonarr.servemato.lan"; description = "TV Shows";};}
-          {Readarr = {href = "https://readarr.servemato.lan"; description = "Audiobooks & Books";};}
-          {Audiobookshelf = {href = "https://abs.servemato.lan"; description = "Audiobook & ebook library";};}
-          {Bazarr = {href = "https://bazarr.servemato.lan"; description = "Subtitles";};}
-          {Prowlarr = {href = "https://prowlarr.servemato.lan"; description = "Indexers";};}
-          {qBittorrent = {href = "https://qbit.servemato.lan"; description = "Downloads";};}
-          {Tdarr = {href = "https://tdarr.servemato.lan"; description = "Transcoding";};}
+          {Jellyfin = {href = "https://jellyfin.servemato.iancd.net"; description = "Media server";};}
+          {Radarr = {href = "https://radarr.servemato.iancd.net"; description = "Movies";};}
+          {Sonarr = {href = "https://sonarr.servemato.iancd.net"; description = "TV Shows";};}
+          {Readarr = {href = "https://readarr.servemato.iancd.net"; description = "Audiobooks & Books";};}
+          {Audiobookshelf = {href = "https://abs.servemato.iancd.net"; description = "Audiobook & ebook library";};}
+          {Bazarr = {href = "https://bazarr.servemato.iancd.net"; description = "Subtitles";};}
+          {Prowlarr = {href = "https://prowlarr.servemato.iancd.net"; description = "Indexers";};}
+          {qBittorrent = {href = "https://qbit.servemato.iancd.net"; description = "Downloads";};}
+          {Tdarr = {href = "https://tdarr.servemato.iancd.net"; description = "Transcoding";};}
         ];
       }
       {
         Files = [
-          {Seafile = {href = "https://seafile.servemato.lan"; description = "File sync and storage";};}
+          {Seafile = {href = "https://seafile.servemato.iancd.net"; description = "File sync and storage";};}
         ];
       }
       {
         Infrastructure = [
-          {"Pi-hole" = {href = "https://pihole.servemato.lan"; description = "DNS";};}
+          {"Pi-hole" = {href = "https://pihole.servemato.iancd.net"; description = "DNS";};}
         ];
       }
     ];
@@ -953,7 +940,7 @@ XML
           SEAFILE_ADMIN_EMAIL: iancatesdoglio@gmail.com
           SEAFILE_ADMIN_PASSWORD: ''${SEAFILE_ADMIN_PASSWORD}
           SEAFILE_SERVER_LETSENCRYPT: "false"
-          SEAFILE_SERVER_HOSTNAME: seafile.servemato.lan
+          SEAFILE_SERVER_HOSTNAME: seafile.servemato.iancd.net
         depends_on:
           - db
           - memcached
@@ -997,7 +984,7 @@ XML
 
         CONF=/srv/seafile/data/seafile/conf/seahub_settings.py
         if [ -f "$CONF" ] && ! grep -q 'CSRF_TRUSTED_ORIGINS' "$CONF"; then
-            echo 'CSRF_TRUSTED_ORIGINS = ["https://seafile.servemato.lan"]' >> "$CONF"
+            echo 'CSRF_TRUSTED_ORIGINS = ["https://seafile.servemato.iancd.net"]' >> "$CONF"
         fi
       '';
       ExecStart = "${pkgs.docker-compose}/bin/docker-compose -f /etc/seafile/docker-compose.yml --env-file /run/seafile.env up -d";

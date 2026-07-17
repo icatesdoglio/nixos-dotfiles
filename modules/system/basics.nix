@@ -16,8 +16,6 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    security.pki.certificateFiles = [ ../../certs/servemato-caddy-ca.pem ];
-
     security.sudo.extraConfig = "Defaults timestamp_timeout=60";
 
     time.timeZone = cfg.timezone;

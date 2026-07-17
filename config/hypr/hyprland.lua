@@ -1,6 +1,8 @@
 -- MONITORS
 hl.monitor({ output = "desc:ASUSTek COMPUTER INC VG249Q3A S5LMTF021455", mode = "1920x1080@180", position = "0x0",    scale = "1" })
 hl.monitor({ output = "desc:Acer Technologies Acer H236HL LX1AA0044210", mode = "1920x1080@60",  position = "1920x0", scale = "1" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D MBLMQS233283",    mode = "1920x1080@60",  position = "0x0", scale = "1" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D MBLMQS233434",    mode = "1920x1080@60",  position = "1920x0", scale = "1" })
 hl.monitor({ output = "eDP-1",                                            mode = "2560x1600@165", position = "3840x0", scale = "1.33" })
 hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036497",    mode = "1920x1080@60",  position = "5765x0", scale = "1" })
 hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036502",    mode = "1920x1080@60",  position = "7685x0", scale = "1" })
@@ -21,7 +23,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("swaync")
     hl.exec_cmd("seaf-cli start")
-    hl.exec_cmd("jellyfin-mpv-shim")
 end)
 
 hl.on("window.open", function(win)
@@ -258,6 +259,21 @@ hl.bind(mainMod .. " + m", function()
         focus_jellyfin()
     end
 end)
+
+-- PROJECT WORKSPACES
+local function open_wc_workspace()
+    hl.dispatch(hl.dsp.focus({ workspace = 8 }))
+    local h = io.popen("tmux has-session -t repl 2>/dev/null; echo $?")
+    if h then
+        local code = h:read("*l")
+        h:close()
+        if code ~= "0" then
+            hl.exec_cmd("~/.config/hypr/scripts/wc-workspace")
+        end
+    end
+end
+
+hl.bind(mainMod .. " + c", open_wc_workspace)
 
 -- WINDOW RULES
 hl.window_rule({

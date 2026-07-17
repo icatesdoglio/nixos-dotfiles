@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -e
+DIR="$HOME/WC-Net-Positions"
+APP_DIR="$DIR/app"
+ENVFILE="/tmp/wc-devenv.sh"
+
+# Evaluate the devshell once so concurrent windows don't fight over the nix db lock
+nix develop "$DIR" --print-dev-env > "$ENVFILE"
+
+# repl: interactive bash with devshell env (vim-slime target: repl:0.0)
+wezterm start -- tmux new-session -s repl -c "$DIR" \
+    "bash -c \"source $ENVFILE; exec bash\"" &
+
+# nvim: drops back to devshell bash on :q
+wezterm start -- bash -c "source '$ENVFILE' && cd '$DIR' && nvim .; exec bash" &
+
+# uvicorn
+wezterm start -- bash -c "source '$ENVFILE' && cd '$APP_DIR' && uvicorn api.main:app --reload" &
+
+# claude: drops back to devshell bash on exit
+wezterm start -- bash -c "source '$ENVFILE' && cd '$DIR' && claude; exec bash" &

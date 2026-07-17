@@ -23,10 +23,7 @@ in {
       .xdg-desktop-portal-hyprland;
     };
 
-    programs.firefox = {
-      enable = true;
-      policies.Certificates.Install = [ ../../certs/servemato-caddy-ca.pem ];
-    };
+    programs.firefox.enable = true;
 
     environment.systemPackages = with pkgs; [
       foot

@@ -254,6 +254,9 @@
   hardware.bluetooth = {
     enable = true;
   };
+  environment.etc."citrix-icaclient/keystore/cacerts/ca-bundle.crt".source =
+    "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+
   environment.systemPackages = with pkgs; [
     alsa-utils
     pulseaudio
