@@ -416,139 +416,108 @@ end, { desc = "[R]un file in REPL" })
 -- DADBOD / DATABASE UI
 vim.g.db_ui_use_nerd_fonts = 1
 vim.g.db_ui_save_location = vim.fn.expand("~/.local/share/db_ui")
+vim.o.exrc = true  -- load per-project .nvim.lua
 
--- Per-environment Databricks connection config.
--- Add UAT/PROD entries once you have those Lakebase/warehouse endpoints.
-local db_envs = {
-    QA = {
-        profile           = "QA",
-        -- Databricks SQL Warehouse (Unity Catalog)
-        databricks_host   = "adb-21869932207915.15.azuredatabricks.net",
-        http_path         = "/sql/1.0/warehouses/65ecef1d811e1fa6",
-        catalog           = "qa_analytics",
-        schema            = "wc_net_positions",
-        -- Lakebase (PostgreSQL mirror of synced tables)
-        lakebase_host     = "ep-lively-snow-e9yggkni.database.eastus.azuredatabricks.net",
-        lakebase_db       = "wc_net_positions",
-    },
-}
-local db_active_env = "QA"
-
-local db_log_path = vim.fn.expand("~/.local/share/db_ui/databricks.log")
-
-local function db_log(level, msg)
+-- Shared log, written by all projects.
+local _db_log_path = vim.fn.expand("~/.local/share/db_ui/databricks.log")
+local function _db_log(level, msg)
     local line = os.date("%Y-%m-%d %H:%M:%S") .. " [" .. level .. "] " .. msg
-    local f = io.open(db_log_path, "a")
+    local f = io.open(_db_log_path, "a")
     if f then f:write(line .. "\n"); f:close() end
-    local nvim_level = level == "ERROR" and vim.log.levels.ERROR
-                    or level == "WARN"  and vim.log.levels.WARN
-                    or vim.log.levels.INFO
-    vim.notify(msg, nvim_level)
+    local lvl = level == "ERROR" and vim.log.levels.ERROR
+             or level == "WARN"  and vim.log.levels.WARN
+             or vim.log.levels.INFO
+    vim.notify(msg, lvl)
 end
 
--- Fetches a fresh OAuth token for the active environment and injects it into
--- the process environment so psql/dbsqlcli pick it up without the token ever
--- appearing in a stored URL.  Returns the env config table on success, nil on failure.
-local function databricks_refresh()
-    local env = db_envs[db_active_env]
-    if not env then
-        db_log("ERROR", "Unknown Databricks env: " .. db_active_env)
-        return nil
-    end
+-- Called from per-project .nvim.lua:
+--   dadbod.setup({ envs = { QA = {...}, UAT = {...} }, default = "QA" })
+-- Each env entry: profile, databricks_host, http_path, catalog, schema,
+--                 lakebase_host, lakebase_db, lakebase_user
+dadbod = { setup = function(config)
+    local envs   = config.envs
+    local active = config.default or next(envs)
 
-    -- Capture stderr separately so we can log the real error on failure.
-    local err_file = vim.fn.tempname()
-    local raw = vim.fn.system(
-        "databricks auth token --profile " .. vim.fn.shellescape(env.profile)
-        .. " --output json 2>" .. err_file
-    )
-    local stderr = table.concat(vim.fn.readfile(err_file), "\n")
-    vim.fn.delete(err_file)
-
-    if vim.v.shell_error ~= 0 then
-        db_log("ERROR",
-            "databricks auth token failed (profile: " .. env.profile .. ")"
-            .. (stderr ~= "" and "\n" .. stderr or " — run :DatabricksLogin first")
+    local function refresh()
+        local env = envs[active]
+        if not env then _db_log("ERROR", "Unknown Databricks env: " .. active); return nil end
+        local err_file = vim.fn.tempname()
+        local raw = vim.fn.system(
+            "databricks auth token --profile " .. vim.fn.shellescape(env.profile)
+            .. " --output json 2>" .. err_file
         )
-        return nil
+        local stderr = table.concat(vim.fn.readfile(err_file), "\n")
+        vim.fn.delete(err_file)
+        if vim.v.shell_error ~= 0 then
+            _db_log("ERROR", "auth token failed (profile: " .. env.profile .. ")"
+                .. (stderr ~= "" and "\n" .. stderr or " — run :DatabricksLogin first"))
+            return nil
+        end
+        local ok, parsed = pcall(vim.json.decode, raw)
+        if not ok or not parsed or not parsed.access_token then
+            _db_log("ERROR", "unexpected token output\nstdout: " .. raw .. "\nstderr: " .. stderr)
+            return nil
+        end
+        vim.env.PGPASSWORD            = parsed.access_token
+        vim.env.DATABRICKS_TOKEN      = parsed.access_token
+        vim.env.DBSQLCLI_ACCESS_TOKEN = parsed.access_token
+        _db_log("INFO", "token refreshed [" .. active .. "] profile=" .. env.profile)
+        return env
     end
 
-    local ok, parsed = pcall(vim.json.decode, raw)
-    if not ok or not parsed or not parsed.access_token then
-        db_log("ERROR", "databricks: unexpected token output\nstdout: " .. raw .. "\nstderr: " .. stderr)
-        return nil
-    end
+    vim.keymap.set("n", "<leader>db", function()
+        local env = refresh()
+        if not env then return end
+        local out = vim.fn.system(
+            "dbsqlcli --hostname " .. vim.fn.shellescape(env.databricks_host)
+            .. " --http-path "     .. vim.fn.shellescape(env.http_path)
+            .. " -e 'SELECT 1' 2>&1"
+        )
+        if vim.v.shell_error ~= 0 then
+            _db_log("ERROR", "Databricks SQL preflight failed [" .. active .. "]:\n" .. out)
+        else
+            _db_log("INFO",  "Databricks SQL preflight OK [" .. active .. "]")
+        end
+        vim.g.dbs = {
+            {
+                name = "Lakebase – " .. env.lakebase_db .. " [" .. active .. "]",
+                url  = "postgresql://" .. (env.lakebase_user or "icates-doglio%40teainc.org")
+                    .. "@" .. env.lakebase_host
+                    .. ":5432/" .. env.lakebase_db .. "?sslmode=require",
+            },
+            {
+                name = "Databricks – " .. env.catalog .. "." .. env.schema .. " [" .. active .. "]",
+                url  = "databricks://" .. env.databricks_host
+                    .. "/" .. env.catalog .. "." .. env.schema
+                    .. "?http_path=" .. env.http_path,
+            },
+        }
+        vim.cmd("DBUIToggle")
+    end, { desc = "[D]ata[b]ase UI" })
 
-    vim.env.PGPASSWORD             = parsed.access_token  -- psql / Lakebase
-    vim.env.DATABRICKS_TOKEN       = parsed.access_token  -- databricks CLI
-    vim.env.DBSQLCLI_ACCESS_TOKEN  = parsed.access_token  -- dbsqlcli adapter
-    db_log("INFO", "token refreshed [" .. db_active_env .. "] profile=" .. env.profile)
-    return env
-end
+    vim.api.nvim_create_user_command("DatabricksEnv", function(args)
+        local name = vim.trim(args.args)
+        if not envs[name] then
+            vim.notify("Unknown env '" .. name .. "'. Available: "
+                .. table.concat(vim.tbl_keys(envs), ", "), vim.log.levels.ERROR)
+            return
+        end
+        active = name
+        vim.notify("Databricks env → " .. name .. " (profile: " .. envs[name].profile .. ")",
+            vim.log.levels.INFO)
+    end, { nargs = 1, complete = function() return vim.tbl_keys(envs) end,
+           desc = "Switch active Databricks environment" })
 
--- Rebuild g:dbs on every open so credentials are always fresh and never on disk.
--- PGPASSWORD is set as a side-effect; the Lakebase URL carries no secret.
-vim.keymap.set("n", "<leader>db", function()
-    local env = databricks_refresh()
-    if not env then return end
-    -- Pre-flight: run SELECT 1 via dbsqlcli and log the real error before dadbod
-    -- swallows it in its own scratch buffer.
-    local db_out = vim.fn.system(
-        "dbsqlcli --hostname " .. vim.fn.shellescape(env.databricks_host)
-        .. " --http-path " .. vim.fn.shellescape(env.http_path)
-        .. " -e 'SELECT 1' 2>&1"
-    )
-    if vim.v.shell_error ~= 0 then
-        db_log("ERROR", "Databricks SQL preflight failed [" .. db_active_env .. "]:\n" .. db_out)
-    else
-        db_log("INFO", "Databricks SQL preflight OK [" .. db_active_env .. "]")
-    end
+    vim.api.nvim_create_user_command("DatabricksLog", function()
+        vim.cmd("split " .. _db_log_path)
+        vim.cmd("normal! G")
+    end, { desc = "Open Databricks connection log" })
 
-    local pg_url = "postgresql://icates-doglio%40teainc.org"
-        .. "@" .. env.lakebase_host
-        .. ":5432/" .. env.lakebase_db .. "?sslmode=require"
-
-    vim.g.dbs = {
-        {
-            name = "Lakebase – " .. env.lakebase_db .. " [" .. db_active_env .. "]",
-            url  = pg_url,
-        },
-        {
-            name = "Databricks – " .. env.catalog .. "." .. env.schema .. " [" .. db_active_env .. "]",
-            url  = "databricks://" .. env.databricks_host
-                .. "/" .. env.catalog .. "." .. env.schema
-                .. "?http_path=" .. env.http_path,
-        },
-    }
-    vim.cmd("DBUIToggle")
-end, { desc = "[D]ata[b]ase UI" })
-
--- :DatabricksEnv QA   — switch active environment (tab-completes env names)
-vim.api.nvim_create_user_command("DatabricksEnv", function(args)
-    local name = vim.trim(args.args)
-    if not db_envs[name] then
-        vim.notify("Unknown env '" .. name .. "'. Available: " .. table.concat(vim.tbl_keys(db_envs), ", "), vim.log.levels.ERROR)
-        return
-    end
-    db_active_env = name
-    vim.notify("Databricks env → " .. name .. " (profile: " .. db_envs[name].profile .. ")", vim.log.levels.INFO)
-end, {
-    nargs = 1,
-    complete = function() return vim.tbl_keys(db_envs) end,
-    desc = "Switch active Databricks environment",
-})
-
--- :DatabricksLog  — open the auth/connection log in a split
-vim.api.nvim_create_user_command("DatabricksLog", function()
-    vim.cmd("split " .. db_log_path)
-    vim.cmd("normal! G")  -- jump to bottom
-end, { desc = "Open Databricks connection log" })
-
--- :DatabricksLogin  — re-authenticate for the active environment's profile
-vim.api.nvim_create_user_command("DatabricksLogin", function()
-    local env = db_envs[db_active_env]
-    vim.fn.system("databricks auth login --profile " .. env.profile)
-    if databricks_refresh() then
-        vim.notify("Databricks: authenticated [" .. db_active_env .. "]", vim.log.levels.INFO)
-    end
-end, { desc = "Databricks OAuth login for active environment" })
+    vim.api.nvim_create_user_command("DatabricksLogin", function()
+        local env = envs[active]
+        vim.fn.system("databricks auth login --profile " .. env.profile)
+        if refresh() then
+            vim.notify("Databricks: authenticated [" .. active .. "]", vim.log.levels.INFO)
+        end
+    end, { desc = "Databricks OAuth login for active environment" })
+end }

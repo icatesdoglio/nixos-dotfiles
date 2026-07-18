@@ -262,14 +262,10 @@ end)
 
 -- PROJECT WORKSPACES
 local function open_wc_workspace()
-    local log = io.open("/tmp/wc-lua.log", "a")
-    if log then
-        log:write(os.date("[%H:%M:%S] ") .. "open_wc_workspace fired\n")
-        log:close()
-    end
     hl.dispatch(hl.dsp.focus({ workspace = 8 }))
-    -- tmux check moved into the script; just always call it
-    hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/wc-workspace")
+    if not os.execute("tmux has-session -t wc-repl 2>/dev/null") then
+        hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/wc-workspace")
+    end
 end
 
 hl.bind(mainMod .. " + c", open_wc_workspace)

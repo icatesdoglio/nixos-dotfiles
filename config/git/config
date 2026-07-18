@@ -1,6 +1,6 @@
 [user]
 	name = Ian Cates-Doglio
-	email = icates-doglio@teainc.org
+	email = iancatesdoglio@gmail.com
 	username = icatesdoglio
 [alias]
 	st = status -s
@@ -59,3 +59,9 @@
 	conflictstyle = zdiff3
 [interactive]
 	diffFilter = delta --color-only
+
+[includeIf "hasconfig:remote.*.url:https://github.com/TEA-Analytics/**"]
+	path = work
+
+[includeIf "hasconfig:remote.*.url:git@github.com:TEA-Analytics/**"]
+	path = work
