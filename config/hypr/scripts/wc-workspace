@@ -1,21 +1,44 @@
 #!/usr/bin/env bash
-set -e
+exec >> /tmp/wc-workspace.log 2>&1
+set -ex
+
 DIR="$HOME/WC-Net-Positions"
 APP_DIR="$DIR/app"
 ENVFILE="/tmp/wc-devenv.sh"
 
-# Evaluate the devshell once so concurrent windows don't fight over the nix db lock
-nix develop "$DIR" --print-dev-env > "$ENVFILE"
+echo "[$(date '+%H:%M:%S')] wc-workspace script started"
 
-# repl: interactive bash with devshell env (vim-slime target: repl:0.0)
-wezterm start -- tmux new-session -s repl -c "$DIR" \
-    "bash -c \"source $ENVFILE; exec bash\"" &
+# Evaluate devshell once — skip if envfile already exists alongside a live session
+if ! tmux has-session -t wc-repl 2>/dev/null || [ ! -f "$ENVFILE" ]; then
+    echo "running nix print-dev-env..."
+    nix print-dev-env "$DIR" > "$ENVFILE"
+    echo "devenv written to $ENVFILE"
+fi
 
-# nvim: drops back to devshell bash on :q
-wezterm start -- bash -c "source '$ENVFILE' && cd '$DIR' && nvim .; exec bash" &
+# Create the tmux session detached if it doesn't exist yet.
+# We never run tmux new-session as the foreground process of a wezterm window
+# because that makes wezterm close when the tmux client is detached.
+if ! tmux has-session -t wc-repl 2>/dev/null; then
+    repl=$(mktemp /tmp/wc-XXXXXX.sh)
+    printf '#!/usr/bin/env bash\n_bash=$(command -v bash)\nsource "%s"\nunset PS1\nexec "$_bash"\n' "$ENVFILE" > "$repl"
+    chmod +x "$repl"
+    tmux new-session -ds wc-repl -c "$DIR" "$repl"
+fi
 
-# uvicorn
-wezterm start -- bash -c "source '$ENVFILE' && cd '$APP_DIR' && uvicorn api.main:app --reload" &
+nvim_l=$(mktemp /tmp/wc-XXXXXX.sh)
+printf '#!/usr/bin/env bash\n_bash=$(command -v bash)\ncd "%s"\nsource "%s"\nunset PS1\nnvim .\nexec "$_bash"\n' "$DIR" "$ENVFILE" > "$nvim_l"
+chmod +x "$nvim_l"
 
-# claude: drops back to devshell bash on exit
-wezterm start -- bash -c "source '$ENVFILE' && cd '$DIR' && claude; exec bash" &
+uvicorn_l=$(mktemp /tmp/wc-XXXXXX.sh)
+printf '#!/usr/bin/env bash\ncd "%s"\nsource "%s"\nuvicorn api.main:app --reload\n' "$APP_DIR" "$ENVFILE" > "$uvicorn_l"
+chmod +x "$uvicorn_l"
+
+claude_l=$(mktemp /tmp/wc-XXXXXX.sh)
+printf '#!/usr/bin/env bash\n_bash=$(command -v bash)\ncd "%s"\nsource "%s"\nunset PS1\nclaude\nexec "$_bash"\n' "$DIR" "$ENVFILE" > "$claude_l"
+chmod +x "$claude_l"
+
+# Always open all 4 windows. tmux attach allows multiple clients without detaching.
+wezterm start -- tmux attach -t wc-repl &
+wezterm start -- "$nvim_l" &
+wezterm start -- "$uvicorn_l" &
+wezterm start -- "$claude_l" &

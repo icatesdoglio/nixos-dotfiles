@@ -28,7 +28,12 @@ in {
         lua-language-server
         postgresql
         databricks-cli
-        databricks-sql-cli
+        (databricks-sql-cli.overrideAttrs (old: {
+          postInstall = (old.postInstall or "") + ''
+            substituteInPlace $out/lib/python*/site-packages/dbsqlcli/sqlexecute.py \
+              --replace-fail '_user_agent_entry=' 'user_agent_entry='
+          '';
+        }))
       ];
       plugins = with pkgs.vimPlugins; [
         nvim-treesitter
