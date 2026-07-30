@@ -263,6 +263,8 @@
     pavucontrol
     citrix-workspace
     spotify
+    zoom-us
+    databricks-cli
     dig
     jellyfin-media-player
     jellyfin-mpv-shim

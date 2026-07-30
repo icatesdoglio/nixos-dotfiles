@@ -86,6 +86,25 @@
   }: let
     overlays = [
       (import neovim-nightly-overlay)
+      (final: prev: {
+        zoom-us = final.callPackage ./app/zoom-us.nix {};
+      })
+      (final: prev: {
+        databricks-cli = prev.databricks-cli.overrideAttrs (old: rec {
+          version = "1.9.0";
+          src = prev.fetchurl {
+            url = "https://github.com/databricks/cli/archive/v${version}.tar.gz";
+            hash = "sha256-TxbqPh57rVjEHc6qU9CzBNz5HP3jX3Ip9B7TbDb3DpE=";
+          };
+          vendorHash = "";
+          ldflags = final.lib.unique (
+            (old.ldflags or [])
+            ++ [
+              "-X github.com/databricks/cli/internal/build.buildVersion=${version}"
+            ]
+          );
+        });
+      })
       (_final: prev: {
         citrix-workspace = (prev.citrix-workspace.override {
           extraCerts = [

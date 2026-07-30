@@ -30,4 +30,16 @@
   my.hm.packages = {
     enable = true;
   };
+
+  xdg.configFile."mimeapps.list".force = true;
+
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      "x-scheme-handler/zoom" = "Zoom.desktop";
+      "x-scheme-handler/zoommtg" = "Zoom.desktop";
+      "x-scheme-handler/zoomus" = "Zoom.desktop";
+      "x-scheme-handler/zoomphonecall" = "Zoom.desktop";
+    };
+  };
 }
