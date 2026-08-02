@@ -109,6 +109,12 @@ hl.config({
         no_hardware_cursors = 2,
     },
 
+    xwayland = {
+        -- XWayland apps (Zoom, etc) render at scale 1 and let Hyprland
+        -- upscale, avoiding input-coordinate misalignment on eDP-1 (1.33 scale).
+        force_zero_scaling = true,
+    },
+
     input = {
         kb_layout  = "us",
         kb_variant = "",
@@ -290,5 +296,14 @@ hl.window_rule({
     size   = "50 50",
     pin    = true,
     move   = "20 monitor_h-window_h-100",
+})
+
+-- Screen-share meeting-controls bar (Mute/Stop Share/etc). Was previously
+-- unmanaged because the rule above matches an older title Zoom no longer uses.
+hl.window_rule({
+    name   = "zoom-share-toolbar",
+    match  = { class = "zoom", title = "as_toolbar" },
+    float  = true,
+    pin    = true,
 })
 

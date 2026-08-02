@@ -94,9 +94,9 @@
           version = "1.9.0";
           src = prev.fetchurl {
             url = "https://github.com/databricks/cli/archive/v${version}.tar.gz";
-            hash = "sha256-TxbqPh57rVjEHc6qU9CzBNz5HP3jX3Ip9B7TbDb3DpE=";
+            hash = "sha256-jK0ekp2JRS9Dgr4/nJHjtGTqzWMER4eA+XiSblO160Q=";
           };
-          vendorHash = "";
+          vendorHash = "sha256-E+Rf0EG36J/yEYVNdOo/tasfxe7wuql/EVrPIOjL1no=";
           ldflags = final.lib.unique (
             (old.ldflags or [])
             ++ [

@@ -273,7 +273,6 @@
     seafile-client
     seafile-shared
     gst_all_1.gst-plugins-bad
-    gst_all_1.gst-vaapi
   ];
   hardware.enableAllFirmware = true;
   hardware.firmware = [pkgs.sof-firmware];
@@ -305,7 +304,7 @@
   users.users.ian.extraGroups = lib.mkAfter ["games"];
 
   programs.steam = {
-    enable = true;
+    enable = false;
     extraCompatPackages = with pkgs; [
       proton-ge-bin
     ];
