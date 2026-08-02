@@ -1,6 +1,6 @@
 [user]
 	email = icates-doglio@teainc.org
-	signingKey = ~/.ssh/id_ed25519.pub
+	signingKey = ~/.ssh/id_ed25519_signing.pub
 
 [gpg]
 	format = ssh
