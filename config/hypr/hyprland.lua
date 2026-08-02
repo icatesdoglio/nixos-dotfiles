@@ -298,12 +298,8 @@ hl.window_rule({
     move   = "20 monitor_h-window_h-100",
 })
 
--- Screen-share meeting-controls bar (Mute/Stop Share/etc). Was previously
--- unmanaged because the rule above matches an older title Zoom no longer uses.
-hl.window_rule({
-    name   = "zoom-share-toolbar",
-    match  = { class = "zoom", title = "as_toolbar" },
-    float  = true,
-    pin    = true,
-})
+-- NOTE: previously had a float+pin rule here for as_toolbar (the screen-share
+-- meeting-controls bar), but it appears to desync Hyprland's render position
+-- from XWayland's internal position for this override-redirect surface,
+-- breaking click hit-testing. Reverted while testing without it.
 
