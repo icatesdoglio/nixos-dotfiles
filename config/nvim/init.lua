@@ -76,14 +76,11 @@ end
 vim.cmd.hi("Comment gui=none")
 vim.cmd.hi("statusline guibg=NONE")
 vim.api.nvim_set_hl(0, "LineNrAbove", { fg = "#BB9AF7", bold = false })
-vim.api.nvim_set_hl(0, "LineNr", { fg = "#FFA500", bold = false })
+vim.api.nvim_set_hl(0, "LineNr",      { fg = "#FFA500", bold = false })
 vim.api.nvim_set_hl(0, "LineNrBelow", { fg = "#F5BDE6", bold = false })
 
 
 vim.o.signcolumn = "yes"
--- -- 80 character mark
--- vim.o.colorcolumn="80"
--- vim.api.nvim_set_hl(0, "ColorColumn", { ctermbg = 0, bg = "#3A3A80" })
 
 local oil = require("oil").setup()
 
@@ -102,7 +99,7 @@ vim.lsp.config("lua_ls", {
   settings = {
     Lua = {
       runtime = { version = "LuaJIT" },
-      diagnostics = { globals = { "vim" } },
+      diagnostics = { globals = { "vim", "hl"} },
       workspace = {
         library = vim.api.nvim_get_runtime_file("", true),
         checkThirdParty = false,
@@ -520,4 +517,3 @@ dadbod = { setup = function(config)
             vim.notify("Databricks: authenticated [" .. active .. "]", vim.log.levels.INFO)
         end
     end, { desc = "Databricks OAuth login for active environment" })
-end }

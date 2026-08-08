@@ -179,6 +179,10 @@ hl.bind(mainMod .. " + R",               hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P",               hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + SHIFT + F",       hl.dsp.window.fullscreen())
 
+for _, dir in ipairs({ "left", "right", "up", "down" }) do
+    hl.bind(mainMod .. " + " .. dir,     hl.dsp.focus({ direction = dir}))
+end
+
 -- Focus (hjkl)
 hl.bind(mainMod .. " + Tab", hl.dsp.focus({ workspace = "previous" }), { release = true })
 hl.bind(mainMod .. " + l", hl.dsp.focus({ direction = "right" }))
@@ -297,6 +301,7 @@ hl.window_rule({
     pin    = true,
     move   = "20 monitor_h-window_h-100",
 })
+
 
 -- NOTE: previously had a float+pin rule here for as_toolbar (the screen-share
 -- meeting-controls bar), but it appears to desync Hyprland's render position

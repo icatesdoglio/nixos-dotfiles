@@ -314,7 +314,5 @@
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
-  # services.caddy.enable = true;
-
   system.stateVersion = "26.05";
 }
