@@ -302,7 +302,6 @@ hl.window_rule({
     move   = "20 monitor_h-window_h-100",
 })
 
-
 -- NOTE: previously had a float+pin rule here for as_toolbar (the screen-share
 -- meeting-controls bar), but it appears to desync Hyprland's render position
 -- from XWayland's internal position for this override-redirect surface,

@@ -68,7 +68,8 @@ if not on_nixos then
             src = "https://github.com/saghen/blink.cmp",
             version = vim.version.range("1.*"),
         },
-        -- "https://github.com/nvim-treestter/nvim-treesitter",
+        { src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "main" },
+        "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
         "https://github.com/jpalardy/vim-slime",
     })
 end
@@ -95,7 +96,7 @@ end)
 vim.lsp.config("lua_ls", {
   cmd = { "lua-language-server" },
   filetypes = { "lua" },
-  root_dir = vim.fn.getcwd(),
+  root_markers = { ".luarc.json", ".git" },
   settings = {
     Lua = {
       runtime = { version = "LuaJIT" },
@@ -167,7 +168,7 @@ vim.lsp.enable("marksman")
 vim.lsp.config("nixd", {
   cmd = { "nixd" },
   filetypes = { "nix" },
-  root_dir = vim.fn.getcwd(),
+  root_markers = { "flake.nix", ".git" },
   settings = {
     nixpkgs = {
       expr = "import <nixpkgs> {}",
@@ -184,6 +185,156 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', 'gd', vim.lsp.buf.definition, { buffer = args.buf })
   end,
 })
+
+-- TREESITTER
+local ts_ok, treesitter = pcall(require, "nvim-treesitter")
+if ts_ok then
+    -- install_dir must be set explicitly, even to the default value: only then
+    -- does nvim-treesitter prepend it to 'runtimepath', which is what lets
+    -- vim.treesitter.query.get() find the parsers' linked query files
+    -- (highlights/indents/etc). Without this, indent/highlight queries silently
+    -- fail to resolve for every language.
+    treesitter.setup({
+        install_dir = vim.fn.stdpath("data") .. "/site",
+    })
+
+    local ensure_installed = {
+        "bash",
+        "c",
+        "diff",
+        "html",
+        "lua",
+        "luadoc",
+        "markdown",
+        "markdown_inline",
+        "latex",
+        "query",
+        "vim",
+        "vimdoc",
+        "r",
+        "python",
+    }
+
+    treesitter.install(ensure_installed):wait(300000)
+
+    vim.api.nvim_create_autocmd("FileType", {
+        callback = function(args)
+            if pcall(vim.treesitter.start) then
+                vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+            end
+        end,
+    })
+end
+
+local textobj_ok, textobjects = pcall(require, "nvim-treesitter-textobjects")
+if textobj_ok then
+    textobjects.setup({
+        select = {
+            lookahead = true,
+            selection_modes = {
+                ["@parameter.outer"] = "v",
+                ["@function.outer"] = "V",
+                ["@class.outer"] = "V",
+                ["@statement.outer"] = "V",
+            },
+        },
+        move = {
+            set_jumps = true,
+        },
+    })
+
+    local select = require("nvim-treesitter-textobjects.select")
+    local move = require("nvim-treesitter-textobjects.move")
+    local swap = require("nvim-treesitter-textobjects.swap")
+
+    local function select_textobject(query, group)
+        return function()
+            select.select_textobject(query, group or "textobjects")
+        end
+    end
+
+    vim.keymap.set({ "x", "o" }, "af", select_textobject("@function.outer"))
+    vim.keymap.set({ "x", "o" }, "if", select_textobject("@function.inner"))
+    vim.keymap.set({ "x", "o" }, "ac", select_textobject("@class.outer"))
+    vim.keymap.set({ "x", "o" }, "ic", select_textobject("@class.inner"))
+    vim.keymap.set({ "x", "o" }, "aa", select_textobject("@parameter.outer"))
+    vim.keymap.set({ "x", "o" }, "ia", select_textobject("@parameter.inner"))
+    vim.keymap.set({ "x", "o" }, "av", select_textobject("@statement.outer"))
+    vim.keymap.set({ "x", "o" }, "as", select_textobject("@local.scope", "locals"))
+
+    vim.keymap.set({ "n", "x", "o" }, "]f", function()
+        move.goto_next_start("@function.outer", "textobjects")
+    end)
+    vim.keymap.set({ "n", "x", "o" }, "]c", function()
+        move.goto_next_start("@class.outer", "textobjects")
+    end)
+    vim.keymap.set({ "n", "x", "o" }, "[f", function()
+        move.goto_previous_start("@function.outer", "textobjects")
+    end)
+    vim.keymap.set({ "n", "x", "o" }, "[c", function()
+        move.goto_previous_start("@class.outer", "textobjects")
+    end)
+    vim.keymap.set({ "n", "x", "o" }, "[v", function()
+        move.goto_previous_start("@statement.outer", "textobjects")
+    end)
+
+    vim.keymap.set("n", "<leader>a", function()
+        swap.swap_next("@parameter.inner")
+    end)
+    vim.keymap.set("n", "<leader>A", function()
+        swap.swap_previous("@parameter.inner")
+    end)
+
+    local ts = vim.treesitter
+
+    local function node_depth(node)
+        local depth = 0
+        while node:parent() do
+            depth = depth + 1
+            node = node:parent()
+        end
+        return depth
+    end
+
+    local function goto_next_flat_statement()
+        local bufnr = vim.api.nvim_get_current_buf()
+        local cursor_node = ts.get_node()
+        if not cursor_node then return end
+
+        local target_depth = node_depth(cursor_node)
+
+        local lang = ts.language.get_lang(vim.bo[bufnr].filetype)
+        local query = ts.query.get(lang, "textobjects")
+        if not query then return end
+
+        local root = ts.get_parser(bufnr, lang):parse()[1]:root()
+        local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
+        cursor_row = cursor_row - 1
+
+        for id, node in query:iter_captures(root, bufnr, cursor_row, -1) do
+            local name = query.captures[id]
+            if name == "statement.outer" then
+                -- Skip comment nodes
+                if node:type() == "comment" then
+                    goto continue
+                end
+
+                local srow, scol = node:range()
+                if (srow > cursor_row) or (srow == cursor_row and scol > cursor_col) then
+                    if node_depth(node) <= target_depth then
+                        vim.api.nvim_win_set_cursor(0, { srow + 1, scol })
+                        return
+                    end
+                end
+            end
+            ::continue::
+        end
+
+        print("No next flat statement found.")
+    end
+
+    vim.keymap.set("n", "]v", goto_next_flat_statement, { desc = "Next flat statement (same depth)" })
+end
 
 vim.api.nvim_set_hl(0, "StatusLine", {
   fg = "#ffffff",
@@ -517,3 +668,4 @@ dadbod = { setup = function(config)
             vim.notify("Databricks: authenticated [" .. active .. "]", vim.log.levels.INFO)
         end
     end, { desc = "Databricks OAuth login for active environment" })
+end }

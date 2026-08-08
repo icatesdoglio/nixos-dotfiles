@@ -1,0 +1,8 @@
+{
+  "runtime.version": "LuaJIT",
+  "diagnostics.globals": ["vim", "hl"],
+  "workspace.checkThirdParty": false,
+  "workspace.library": [
+    "/etc/profiles/per-user/ian/share/nvim/runtime/lua"
+  ]
+}

@@ -1,5 +1,5 @@
 {
   "workspace": {
-    "library": ["../hypr-stubs"]
+    "library": ["/home/ian/.config/hypr-stubs"]
   }
 }
