@@ -285,10 +285,10 @@ in {
   services.caddy = {
     enable = true;
     package = pkgs.caddy.withPlugins {
-      plugins = ["github.com/caddy-dns/cloudflare@v0.2.1"];
+      plugins = ["github.com/caddy-dns/cloudflare@v0.2.4"];
       # Run `nixos-rebuild build` with this placeholder — the error will print
       # the correct hash; paste it here and rebuild again.
-      hash = "sha256-+nSmZNTdPv7d/T7qijkggyAf77RP17M6j4Cez/oha8Q=";
+      hash = "sha256-Q0lgI8MY90u/5R/xXBVPQWCZBN7dUZ0kcuDxD0xd0fo=";
     };
 
     globalConfig = ''
@@ -1036,6 +1036,8 @@ XML
     "d /srv/jellyfin/data 0770 jellyfin media -"
     "d /srv/jellyfin/config 0770 jellyfin media -"
     "d /var/cache/jellyfin 0770 jellyfin media -"
+    # Clean up transcode files older than 24h to prevent the tmpfs from filling up
+    "e /var/cache/jellyfin/transcodes 0700 jellyfin media 1d"
   ];
 
   system.activationScripts.arrStateOwnership.text = ''
