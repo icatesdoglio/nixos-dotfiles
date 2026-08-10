@@ -258,22 +258,28 @@
     "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
 
   environment.systemPackages = with pkgs; [
-    alsa-utils
-    pulseaudio
-    pavucontrol
-    citrix-workspace
-    spotify
-    zoom-us
-    databricks-cli
-    dig
-    jellyfin-media-player
-    jellyfin-mpv-shim
-    mpv
-    wineWow64Packages.stable
-    seafile-client
-    seafile-shared
-    gst_all_1.gst-plugins-bad
-  ];
+      alsa-utils
+      pulseaudio
+      pavucontrol
+      citrix-workspace
+      spotify
+      zoom-us
+      databricks-cli
+      dig
+      jellyfin-media-player
+      jellyfin-mpv-shim
+      mpv
+      wineWow64Packages.stable
+      seafile-client
+      seafile-shared
+      gst_all_1.gst-plugins-bad
+    ]
+    ++ [
+      # Launch the Citrix-published "Remote Desktop Conn" (mstsc, wrapped as
+      # an ICA app on TEAStore) from the CLI at a chosen window resolution,
+      # skipping the selfservice GUI picker. Usage: citrix-mstsc [W] [H]
+      (pkgs.writeShellScriptBin "citrix-mstsc" (builtins.readFile ./citrix-mstsc.sh))
+    ];
   hardware.enableAllFirmware = true;
   hardware.firmware = [pkgs.sof-firmware];
 
