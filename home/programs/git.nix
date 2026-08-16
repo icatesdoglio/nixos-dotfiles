@@ -21,6 +21,7 @@ in {
       github-copilot-cli
       codex
       delta
+      azure-cli
     ];
 
     home.file.".config/git" = {
