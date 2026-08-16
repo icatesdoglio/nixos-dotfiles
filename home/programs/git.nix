@@ -21,7 +21,9 @@ in {
       github-copilot-cli
       codex
       delta
-      azure-cli
+      (azure-cli.withExtensions [
+       azure-cli-extensions.azure-devops
+      ])
     ];
 
     home.file.".config/git" = {

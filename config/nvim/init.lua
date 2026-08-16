@@ -346,6 +346,9 @@ local blink = require("blink.cmp")
 local gh_issues = require("github_issues")
 gh_issues.setup_vt()
 
+local azure_boards = require("azure_boards")
+azure_boards.setup_vt()
+
 blink.setup({
     keymap = { preset = "default" },
     appearance = {
@@ -353,13 +356,21 @@ blink.setup({
     },
     completion = { documentation = { auto_show = true } },
     sources = {
-        default = { "lsp", "path", "snippets", "buffer", "github_issues", "dadbod" },
+        default = { "lsp", "path", "snippets", "buffer", "github_issues", "azure_boards", "dadbod" },
         providers = {
             github_issues = {
                 name = "GH Issues",
                 module = "github_issues",
                 enabled = function()
                     return gh_issues.is_git_buffer()
+                end,
+                score_offset = 5,
+            },
+            azure_boards = {
+                name = "Azure Boards",
+                module = "azure_boards",
+                enabled = function()
+                    return azure_boards.is_git_buffer()
                 end,
                 score_offset = 5,
             },
@@ -419,12 +430,6 @@ harpoon:setup()
 vim.api.nvim_set_hl(0, "HarpoonOuterBorder", { fg = "#808080" }) -- grey
 vim.api.nvim_set_hl(0, "HarpoonInnerBorder", { fg = "#ff5555" }) -- red
 vim.api.nvim_set_hl(0, "HarpoonMenuTitle", { fg = "#ff5555", bold = true })
-
-local function close_win(win)
-	if win and vim.api.nvim_win_is_valid(win) then
-		vim.api.nvim_win_close(win, true)
-	end
-end
 
 local function open_harpoon_menu()
 	local list = harpoon:list()
