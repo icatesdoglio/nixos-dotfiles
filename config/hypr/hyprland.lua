@@ -25,6 +25,22 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("swaync")
     hl.exec_cmd("seaf-cli start")
+    hl.exec_cmd("jellyfin-mpv-shim")
+end)
+
+hl.on("window.open", function(win)
+    if win.class == "mpv" then
+        hl.exec_cmd("hyprctl dispatch focuswindow class:mpv")
+    end
+end)
+
+hl.on("window.close", function(win)
+    if win.class == "mpv" then
+        local jellyfin = hl.get_windows({ class = "org.jellyfin.JellyfinDesktop" })
+        if #jellyfin > 0 then
+            hl.exec_cmd("hyprctl dispatch focuswindow class:org.jellyfin.JellyfinDesktop")
+        end
+    end
 end)
 
 hl.on("window.open", function(win)
@@ -271,7 +287,6 @@ hl.bind(mainMod .. " + m", function()
         focus_jellyfin()
     end
 end)
-
 -- PROJECT WORKSPACES
 local function open_wc_workspace()
     hl.dispatch(hl.dsp.focus({ workspace = 8 }))
@@ -303,9 +318,4 @@ hl.window_rule({
     pin    = true,
     move   = "20 monitor_h-window_h-100",
 })
-
--- NOTE: previously had a float+pin rule here for as_toolbar (the screen-share
--- meeting-controls bar), but it appears to desync Hyprland's render position
--- from XWayland's internal position for this override-redirect surface,
--- breaking click hit-testing. Reverted while testing without it.
 

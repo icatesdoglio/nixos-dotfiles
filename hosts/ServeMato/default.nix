@@ -240,7 +240,6 @@ in {
     group = "media";
   };
 
-
   users.users.seafile = {
     isSystemUser = true;
     uid = 994;
@@ -369,9 +368,14 @@ in {
   networking.firewall.interfaces.eth0.allowedTCPPorts = [
     22 # SSH
     53 # DNS
+<<<<<<< HEAD
     2049 # NFS
     8096 # jellyfin
     8266 # tdarr server (node connections from gp-linux)
+||||||| 48cfd27
+=======
+    8096 # jellyfin
+>>>>>>> origin/main
   ];
   networking.firewall.interfaces.eth0.allowedUDPPorts = [
     51820 # Wireguard
