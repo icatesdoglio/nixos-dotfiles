@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+MOD=Mod1
+
+riverctl spawn "rivertile \
+  -view-padding 3 \
+  -outer-padding 4 \
+  -main-location left \
+  -main-count 1 \
+  -main-ratio 0.5"
+
+riverctl default-layout rivertile
+
+riverctl spawn "swaybg -i /home/ian/Pictures/quiet_city.jpeg"
+
+riverctl spawn "waybar \
+    --config /home/ian/.config/river/waybar_config \
+    --style /home/ian/.config/river/waybar_style.css
+"
+
+riverctl set-repeat 50 300
+
+# Tags (dwm-style 1–9)
+for i in $(seq 1 9); do
+  tag=$((1 << (i - 1)))
+
+  # View tag
+  riverctl map normal $MOD $i set-focused-tags $tag
+
+  # Move focused window to tag
+  riverctl map normal $MOD+Shift $i set-view-tags $tag
+done
+
+riverctl map normal $MOD Return spawn wezterm
+riverctl map normal $MOD+Shift Return spawn firefox
+riverctl map normal $MOD R spawn /home/ian/.config/river/scripts/bemenu-custom-run
+
+riverctl map normal $MOD+Shift BackSpace exit
+
+# Toggle float
+riverctl map normal $MOD+Shift Space toggle-float
+
+# Focus movement
+riverctl map normal $MOD H focus-view left
+riverctl map normal $MOD J focus-view down
+riverctl map normal $MOD K focus-view up
+riverctl map normal $MOD L focus-view right
+
+# Move windows
+riverctl map normal $MOD+Shift H swap left
+riverctl map normal $MOD+Shift J swap down
+riverctl map normal $MOD+Shift K swap up
+riverctl map normal $MOD+Shift L swap right
+
+
+riverctl map normal $MOD Q close
+
+riverctl map-pointer normal $MOD BTN_LEFT move-view
+riverctl map-pointer normal $MOD BTN_RIGHT resize-view
+
+riverctl allow-tearing enabled
+
+
+#--------------------------------
+## RULES ------------------------
+#--------------------------------
+
+app_singleton() {
+  APP_ID="$1"
+  TAG="$2"
+  shift 2
+  CMD="$@"
+
+  if riverctl list-views | grep -q "app-id: $APP_ID"; then
+    riverctl set-focused-tags "$TAG"
+  else
+    $CMD &
+    riverctl set-focused-tags "$TAG"
+  fi
+}
+
+# Steam
+STEAM_TAG=$((2<<9))
+riverctl rule-add -app-id steam tags $STEAM_TAG
+riverctl map normal $MOD S spawn \
+  "app_singleton steam $STEAM_TAG steam"
+
+JELLY_TAG=$((2<<10))
+riverctl rule-add -app-id org.jellyfin.jellyfin-desktop tags $JELLY_TAG 
+riverctl rule-add -app-id org.jellyfin.jellyfin-desktop fullscreen
+riverctl map normal $MOD M spawn \
+  "app_singleton $JELLY_TAG jellyfin-desktop"
+
+riverctl map normal None XF86AudioMute  wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+riverctl map normal None XF86AudioRaiseVolume wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+
+riverctl map normal None XF86AudioLowerVolume wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+riverctl map normal None XF86MonBrightnessUp   brightnessctl set +10%
+riverctl map normal None XF86MonBrightnessDown brightnessctl set 10%-
+riverctl map normal None Print grim -g "$(slurp)"
+

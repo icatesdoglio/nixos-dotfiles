@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+set +e
+
+offline='{"text":"󰅜","tooltip":"Seafile: daemon not running","class":"offline"}'
+
+if ! pgrep -f seaf-daemon > /dev/null 2>&1; then
+    echo "$offline"
+    exit 0
+fi
+
+status_output=$(seaf-cli status 2>/dev/null)
+
+if [[ -z "$status_output" ]]; then
+    echo "$offline"
+    exit 0
+fi
+
+statuses=$(echo "$status_output" | tail -n +2 | awk '{print $2}')
+
+if echo "$statuses" | grep -qE "uploading|downloading|initializing|committing"; then
+    tooltip="Seafile: syncing"
+    printf '{"text":"󰅛","tooltip":"%s","class":"syncing"}\n' "$tooltip"
+elif echo "$statuses" | grep -q "error"; then
+    printf '{"text":"󰅜","tooltip":"Seafile: sync error","class":"error"}\n'
+else
+    lib_count=$(echo "$statuses" | grep -c "synchronized")
+    suffix=$([ "$lib_count" -eq 1 ] && echo "library" || echo "libraries")
+    printf '{"text":"󰅢","tooltip":"Seafile: %d %s synced","class":"synced"}\n' "$lib_count" "$suffix"
+fi

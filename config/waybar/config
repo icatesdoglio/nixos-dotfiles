@@ -1,0 +1,101 @@
+{
+    "layer": "top",
+    "modules-left": [
+        "hyprland/workspaces",
+        "hyprland/window"
+    ],
+    "modules-right": ["custom/seafile", "custom/network", "battery", "cpu", "custom/mem-cust", "pulseaudio", "clock#date", "clock#time"],
+
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "format-icons": {
+            "1":    "1",
+            "2":    "2",
+            "3":    "3",
+            "4":    "4",
+            "5":    "5",
+            "6":    "6",
+            "7":    "7",
+            "8":    "8",
+            "9":    "9",
+            "10":   "0",
+            "996":  "󰎇",
+            "997":  "",
+            "998":  "󰒱",
+            "999":  "󰿎",
+            "1000": "󰓓"
+        },
+        "sort-by": "number",
+        "tooltip": false
+    },
+
+    "custom/seafile": {
+        "exec": "~/.config/waybar/scripts/seafile",
+        "interval": 5,
+        "return-type": "json",
+        "on-click": "seafile-applet"
+    },
+
+    "custom/network": {
+        "exec": "~/.config/waybar/scripts/network",
+        "interval": 3,
+        "return-type": "json"
+    },
+
+    "battery": {
+        "format": "{icon} {capacity}%",
+        "format-icons": ["", "", "", "", ""],
+        "format-charging": " {capacity}%",
+        "format-plugged": " {capacity}%"
+    },
+
+    "clock#time": {
+        "format": " {:%H:%M}",
+        "timezone-tooltip-format": "{:%H:%M %Z}",
+        "timezones": [
+            "",
+            "America/Los_Angeles",
+            "America/Chicago",
+            "America/New_York",
+            "UTC"
+        ],
+        "tooltip": true,
+        "tooltip-format": "{tz_list}"
+    },
+    "clock#date": {
+        "format": " {:%a, %b %d}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "month",
+            "weeks-pos": "right",
+            "on-scroll": 1,
+            "format": {
+                "months": "<span color='#ffead3'><b>{}</b></span>",
+                "today": "<span color='#ff6699'><b><u>{}</u></b></span>"
+            }
+        },
+        "actions": {
+            "on-click-right": "mode",
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        }
+    },
+
+    "cpu": {
+        "format": " {usage}%"
+    },
+
+    "custom/mem-cust": {
+        "exec": "~/.config/waybar/scripts/custom-memory",
+        "interval": 3
+    },
+
+    "pulseaudio": {
+        "format": "  {volume}%",
+        "format-muted": "",
+        "on-click": "~/.config/waybar/scripts/window", 
+        "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +1%",
+        "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -1%",
+        "tooltip": false
+    }
+}

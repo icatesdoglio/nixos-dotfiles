@@ -1,0 +1,67 @@
+[user]
+	name = Ian Cates-Doglio
+	email = iancatesdoglio@gmail.com
+	username = icatesdoglio
+[alias]
+	st = status -s
+	lol = log --graph --decorate --all --oneline
+	l = log --graph --decorate --all
+[init]
+	defaultBranch = main
+[core]
+	editor = nvim
+	whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
+	pager = delta
+[web]
+	browser = google-chrome
+[color]
+	ui = auto
+[color "branch"]
+	current = yellow bold
+	local = green bold
+	remote = cyan bold
+[color "diff"]
+	meta = yellow bold
+	frag = magenta bold
+	old = red bold
+	new = green bold
+	whitespace = red reverse
+[color "status"]
+	added = green bold
+	changed = yellow bold
+	untracked = red bold
+[column]
+	ui = auto
+[tag]
+	sort = version:refname
+[diff]
+	algorithm = histogram
+	colorMoved = plain
+	mneumonicPrefix = true
+	renames = true
+[push]
+	default = simple
+	autosSetupRemote = true
+	followTags = true
+[fetch]
+	prune = true
+[help]
+	autocorrect = prompt
+[rebase]
+	autoSquash = true
+	autoStash = true
+	updateRefs = true
+[pull]
+	rebase = true
+[merge]
+	ff = false
+	commit = false
+	conflictstyle = zdiff3
+[interactive]
+	diffFilter = delta --color-only
+
+[includeIf "hasconfig:remote.*.url:https://github.com/TEA-Analytics/**"]
+	path = work
+
+[includeIf "hasconfig:remote.*.url:git@github.com:TEA-Analytics/**"]
+	path = work
