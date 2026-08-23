@@ -49,6 +49,8 @@ in {
         vim-dadbod
         vim-dadbod-ui
         vim-dadbod-completion
+        nvim-treesitter
+        nvim-treesitter-textobjects
       ];
 
       viAlias = true;

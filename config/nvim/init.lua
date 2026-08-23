@@ -1,5 +1,4 @@
-vim.g.mapleader = " "
-vim.g.maplocalleader = " "
+vim.g.mapleader = " " vim.g.maplocalleader = " "
 
 
 vim.o.tabstop = 4
@@ -333,7 +332,63 @@ if textobj_ok then
         print("No next flat statement found.")
     end
 
+    local function format_to_python(tab)
+        local leading_whitespace = tab[1]:match("^(%s*)%S")
+
+        if leading_whitespace == nil then
+            return tab
+        end
+        leading_whitespace = #leading_whitespace
+
+        for i, line in ipairs(tab) do
+            tab[i] = line:sub(leading_whitespace + 1)
+        end
+
+        return tab
+    end
+
+
     vim.keymap.set("n", "]v", goto_next_flat_statement, { desc = "Next flat statement (same depth)" })
+
+    -- Send-to-REPL, ported from ~/src/nvim/lua/plugins/treesitter.lua.
+    -- There <C-h> did the sending because Windows Terminal can't tell
+    -- Ctrl+Enter apart from plain Enter, so an AutoHotkey script watched for
+    -- the physical chord and rewrote it to Ctrl+H before nvim ever saw it.
+    -- wezterm/kitty/foot pass Ctrl+Enter through as its own keycode, so no
+    -- OS-level remap is needed here: <C-CR> is bound directly. Transport is
+    -- vim-slime → tmux (see the REPL section below) instead of the
+    -- wezterm-cli/AHK-trigger-file dance the Windows version used.
+    local function select_statement_and_yank(query, reg)
+        select.select_textobject(query, "textobjects")
+        vim.cmd('normal! "' .. reg .. 'y')
+        vim.cmd("normal! `>")
+    end
+
+    vim.keymap.set("n", "<C-CR>", function()
+        local register = "z"
+
+        select_statement_and_yank("@statement.outer", register)
+
+        local lines = format_to_python(vim.fn.getreg(register, 1, true))
+        vim.fn["slime#send"](table.concat(lines, "\n") .. "\n")
+
+        goto_next_flat_statement()
+    end, { desc = "Send statement to REPL" })
+
+    vim.keymap.set("x", "<C-CR>", function()
+        local register = "x"
+
+        vim.cmd('normal! "' .. register .. "y")
+
+        local lines = format_to_python(vim.fn.getreg(register, 1, true))
+        local _, le, _ = unpack(vim.fn.getpos("'>"))
+
+        -- move cursor to next line start, clamped to end of file
+        local last_line = vim.api.nvim_buf_line_count(0)
+        vim.api.nvim_win_set_cursor(0, { math.min(le + 1, last_line), 0 })
+
+        vim.fn["slime#send"](table.concat(lines, "\n") .. "\n")
+    end, { desc = "Send selection to REPL" })
 end
 
 vim.api.nvim_set_hl(0, "StatusLine", {
@@ -551,19 +606,23 @@ for _, item in ipairs(harpoon_keys) do
 end
 
 -- REPL (vim-slime → tmux)
--- Default target; overridden per-project (e.g. wc-repl for WC-Net-Positions)
--- Use Ctrl-c v to reconfigure the target pane at any time
+-- Target is session-relative ("window 1, pane 0" of whichever session nvim's
+-- shell is attached to), not a hardcoded session name. Every project session
+-- created by project-sessionizer (SUPER+p) follows the same layout: window
+-- 0 "edit" (nvim) and window 1 "repl" (shell), each shown in its own
+-- Hyprland window — so this works unmodified across projects. Use Ctrl-c v
+-- to reconfigure the target pane one-off if needed.
 vim.g.slime_target = "tmux"
-vim.g.slime_default_config = { socket_name = "default", target_pane = "wc-repl:0.0" }
+vim.g.slime_default_config = { socket_name = "default", target_pane = ":1.0" }
 vim.g.slime_dont_ask_default = 1
 vim.g.slime_bracketed_paste = 1  -- wraps in bracketed paste escape sequences so IPython accepts indented blocks
 
-vim.keymap.set("n", "<C-CR>", "<Plug>SlimeLineSend", { desc = "Send line to REPL" })
-vim.keymap.set("x", "<C-CR>", "<Plug>SlimeRegionSend", { desc = "Send selection to REPL" })
+-- <C-CR> is now bound in the TREESITTER section above (statement-node send
+-- via vim-slime, ported from the Windows Ctrl-h/AHK setup).
 
 vim.keymap.set("n", "<leader>r", function()
     local f = vim.fn.expand("%:p")
-    vim.fn.system("tmux send-keys -t repl:0.0 '%run " .. f .. "' Enter")
+    vim.fn.system("tmux send-keys -t :0.1 '%run " .. f .. "' Enter")
 end, { desc = "[R]un file in REPL" })
 
 -- DADBOD / DATABASE UI

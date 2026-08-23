@@ -10,6 +10,7 @@
     ssh.enable = true;
     river.enable = true;
     confdev.enable = true;
+    tmux.enable = true;
     obsidian = {
       enable = true;
       sync.enable = true;

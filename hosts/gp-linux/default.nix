@@ -180,6 +180,11 @@ systemd.services.tdarr-node = {
   environment.systemPackages = with pkgs; [
     seafile-client
     seafile-shared
+    easyeffects
+    zoom-us
+    citrix-workspace
+    wineWow64Packages.stable
+    gst_all_1.gst-plugins-bad
   ];
 
   programs.steam = {

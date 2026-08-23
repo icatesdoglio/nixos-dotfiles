@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# Pick a project (via bemenu) and jump into a standardized tmux session for it,
+# shown as two separate Hyprland windows (tiled by Hyprland itself) rather than
+# a single split window:
+#   window "edit" -> nvim .
+#   window "repl" -> shell, target of vim-slime (see config/nvim/init.lua)
+# Both windows belong to the same tmux session, so they share environment,
+# working directory and window list. Two clients attaching to one session
+# would normally be forced to look at the same "current window" together, so
+# the repl client attaches to a *grouped* session instead — same windows and
+# panes, independent per-client current-window (tmux's mechanism for e.g.
+# showing one session across multiple monitors).
+# If the project has a flake.nix, both windows run inside `nix develop` so the
+# project's .venv / devshell executables are on PATH in both nvim and the repl.
+#
+# Candidates come from zoxide's history plus a couple of known project roots,
+# so both "places I actually cd into" and fresh checkouts show up.
+set -euo pipefail
+
+ACCENT="#c28b2c"
+BG="#16161e"
+FG="#c0caf5"
+DIM="#1a1b26"
+
+ROOTS=("$HOME" "$HOME/projects")
+
+# Not every flake.nix exposes a devShell (e.g. this dotfiles repo is a
+# NixOS/home-manager config flake with none) — check for the real thing
+# rather than assuming flake.nix implies `nix develop` will work.
+system=$(nix eval --impure --raw --expr builtins.currentSystem 2>/dev/null)
+has_devshell() {
+    # git+file: (not path:) so nix only hashes git-tracked files, not the
+    # whole tree (node_modules, .venv, build output, ...) on every invocation.
+    nix eval "git+file://$1#devShells.$system.default" --apply 'x: null' >/dev/null 2>&1
+}
+
+candidates() {
+    zoxide query -l 2>/dev/null
+    for root in "${ROOTS[@]}"; do
+        [ -d "$root" ] || continue
+        fd -H -t d -d 3 '^\.git$' "$root" 2>/dev/null | sed 's#/\.git/*$##'
+    done
+}
+
+selection=$(candidates | awk '!seen[$0]++' | bemenu \
+    -p "Project:" \
+    -c -i -w -l 15 \
+    --binding vim \
+    --vim-esc-exits \
+    --margin 500 \
+    --fn "JetBrainsMono Nerd Font 13" \
+    --tb "$DIM" \
+    --tf "$FG" \
+    --fb "$BG" \
+    --ff "$FG" \
+    --nb "$BG" \
+    --nf "$FG" \
+    --hb "$ACCENT" \
+    --hf "$BG" \
+    --cb "$ACCENT" \
+    --cf "$BG")
+
+[ -z "$selection" ] && exit 0
+[ -d "$selection" ] || exit 0
+
+zoxide add "$selection" 2>/dev/null || true
+
+# tmux session names can't contain ':' or '.' without breaking target-pane
+# addressing, so sanitize the directory's basename into one.
+session=$(basename "$selection" | tr -c 'A-Za-z0-9_-' '_')
+
+# Quitting nvim shouldn't kill the pane out from under you (tmux kills a
+# pane when its command exits) — fall back to an interactive shell instead.
+shell=${SHELL:-bash}
+if [ -f "$selection/flake.nix" ] && has_devshell "$selection"; then
+    # Both panes below run `nix develop` within milliseconds of each other.
+    # Warm the eval cache with one synchronous `nix develop` first so those
+    # two don't race to populate/write the same sqlite cache concurrently
+    # (harmless "database is busy" errors, but pointless duplicated work).
+    nix develop "$selection" -c true >/dev/null 2>&1 || true
+    # The exec must happen *inside* `nix develop -c`, not after it — a
+    # trailing `; exec $shell` outside the devshell invocation drops back to
+    # a plain, non-devshell shell once nvim quits.
+    nvim_cmd="nix develop -c $shell -c 'nvim . ; exec $shell'"
+    repl_cmd="nix develop"
+else
+    nvim_cmd="nvim . ; exec $shell"
+    repl_cmd=""
+fi
+
+repl_session="${session}-repl"
+
+if ! tmux has-session -t "$session" 2>/dev/null; then
+    tmux new-session -ds "$session" -c "$selection" -n edit "$nvim_cmd"
+    tmux new-window -t "$session:" -c "$selection" -n repl $repl_cmd
+    tmux select-window -t "$session:edit"
+fi
+
+# Grouped session: shares the base session's windows/panes, but tracks its
+# own current-window so this client can sit on "repl" while the other sits
+# on "edit".
+if ! tmux has-session -t "$repl_session" 2>/dev/null; then
+    tmux new-session -d -t "$session" -s "$repl_session"
+    tmux select-window -t "$repl_session:repl"
+fi
+
+wezterm start -- tmux attach -t "$session" &
+wezterm start -- tmux attach -t "$repl_session" &

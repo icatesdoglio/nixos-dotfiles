@@ -8,5 +8,6 @@
     ./confdev.nix
     ./bash.nix
     ./obsidian.nix
+    ./tmux.nix
   ];
 }
