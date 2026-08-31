@@ -299,7 +299,7 @@
     hyprland.enable = true;
     dwm.enable = true;
     river.enable = true;
-    plasma.enable = false;
+    plasma.enable = true;
 
     useDisplayManager = false;
   };
