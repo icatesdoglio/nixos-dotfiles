@@ -67,7 +67,11 @@ zoxide add "$selection" 2>/dev/null || true
 
 # tmux session names can't contain ':' or '.' without breaking target-pane
 # addressing, so sanitize the directory's basename into one.
-session=$(basename "$selection" | tr -c 'A-Za-z0-9_-' '_')
+# (Substitute in bash, not via `basename | tr -c`: tr -c also matches
+# basename's trailing newline and turns it into a literal '_', which command
+# substitution then has nothing left to strip - e.g. "Stochastics" -> "Stochastics_".)
+session=$(basename "$selection")
+session=${session//[^A-Za-z0-9_-]/_}
 
 # Quitting nvim shouldn't kill the pane out from under you (tmux kills a
 # pane when its command exits) — fall back to an interactive shell instead.
@@ -78,10 +82,7 @@ if [ -f "$selection/flake.nix" ] && has_devshell "$selection"; then
     # two don't race to populate/write the same sqlite cache concurrently
     # (harmless "database is busy" errors, but pointless duplicated work).
     nix develop "$selection" -c true >/dev/null 2>&1 || true
-    # The exec must happen *inside* `nix develop -c`, not after it — a
-    # trailing `; exec $shell` outside the devshell invocation drops back to
-    # a plain, non-devshell shell once nvim quits.
-    nvim_cmd="nix develop -c $shell -c 'nvim . ; exec $shell'"
+    nvim_cmd="$shell -ic 'eval \"\$(nix print-dev-env)\"; nvim . ; exec $shell'"
     repl_cmd="nix develop"
 else
     nvim_cmd="nvim . ; exec $shell"

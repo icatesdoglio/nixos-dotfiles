@@ -6,6 +6,8 @@ hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D MBLMQS233434",        mod
 hl.monitor({ output = "eDP-1",                                               mode = "2560x1600@165", position = "3840x0", scale = "1.33" })
 hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036497",        mode = "1920x1080@60",  position = "5765x0", scale = "1" })
 hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N3LMQS036502",        mode = "1920x1080@60",  position = "7685x0", scale = "1" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N7LMQS114139",        mode = "1920x1080@60",  position = "5765x0", scale = "1" })
+hl.monitor({ output = "desc:ASUSTek COMPUTER INC VA27D N7LMQS114147",        mode = "1920x1080@60",  position = "7685x0", scale = "1" })
 hl.monitor({ output = "desc:ASUSTek COMPUTER INC ASUS VA27EHE L3LMTF204867", mode = "1920x1080@60",  position = "5765x0", scale = "1" })
 hl.monitor({ output = "desc:ASUSTek COMPUTER INC ASUS VA27EQSB T2LMTF115410",mode = "1920x1080@60",  position = "7685x0", scale = "1" })
 hl.monitor({ output = "",                                                    mode = "preferred",     position = "auto",   scale = "auto" })
